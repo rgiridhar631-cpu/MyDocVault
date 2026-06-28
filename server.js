@@ -16,7 +16,7 @@ const { Anthropic } = require('@anthropic-ai/sdk');
 // ── Services
 const { extractWithOcr }    = require('./services/ocr');
 const { parsePdf }          = require('./services/pdf');
-const { askOllama, ollamaHealth } = require('./services/ollama');
+const { askOllama, askOllamaVision, ollamaHealth } = require('./services/ollama');
 const { initDb, saveDoc, getDocs, deleteDoc } = require('./services/db');
 
 const app  = express();
@@ -28,11 +28,11 @@ app.use(express.json({ limit: '25mb' }));
 app.use(express.static(path.join(__dirname)));
 
 // ── Anthropic client
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
 
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest';
 
 // ── Health check
 app.get('/api/health', async (req, res) => {
@@ -41,6 +41,7 @@ app.get('/api/health', async (req, res) => {
     status: 'ok',
     anthropic: !!process.env.ANTHROPIC_API_KEY,
     ollama: ollamaOk,
+    ollamaAuth: !!process.env.OLLAMA_API_KEY && process.env.OLLAMA_API_KEY !== 'your_api_key',
     model: MODEL,
   });
 });
@@ -62,6 +63,22 @@ app.post('/api/ask', async (req, res) => {
   }));
 
   try {
+    if (!anthropic) {
+      const ollamaOk = await ollamaHealth();
+      if (!ollamaOk) {
+        return res.status(503).json({
+          error: 'No AI backend is configured. Set ANTHROPIC_API_KEY, or start Ollama locally and install a model such as llama3.',
+        });
+      }
+
+      const prompt = toOllamaPrompt(system || '', cleaned);
+      const image = firstImage(cleaned);
+      const result = image
+        ? await askOllamaVision(prompt, image.data, image.model)
+        : await askOllama(prompt);
+      return res.json({ content: [{ type: 'text', text: result }] });
+    }
+
     const response = await anthropic.messages.create({
       model:      MODEL,
       max_tokens: 2048,
@@ -77,6 +94,70 @@ app.post('/api/ask', async (req, res) => {
 });
 
 // ── /api/ollama  — local Ollama fallback (privacy-first)
+function toOllamaPrompt(system, messages) {
+  const lines = [];
+  if (system) lines.push(`System:\n${system}`);
+
+  for (const message of messages) {
+    const role = message.role === 'assistant' ? 'Assistant' : 'User';
+    const text = message.content
+      .map(part => {
+        if (typeof part === 'string') return part;
+        if (part.type === 'text') return part.text || '';
+        return `[${part.type || 'attachment'} omitted: local Ollama text prompt only]`;
+      })
+      .filter(Boolean)
+      .join('\n');
+    lines.push(`${role}:\n${text}`);
+  }
+
+  lines.push('Assistant:');
+  return lines.join('\n\n');
+}
+
+function firstImage(messages) {
+  for (const message of messages) {
+    for (const part of message.content || []) {
+      if (part?.type === 'image' && part.source?.type === 'base64') {
+        return {
+          data: part.source.data,
+          model: process.env.OLLAMA_VISION_MODEL,
+        };
+      }
+    }
+  }
+  return null;
+}
+
+app.post('/api/extract/vision', async (req, res) => {
+  const { base64, filename } = req.body;
+  if (!base64) return res.status(400).json({ error: 'base64 required' });
+
+  try {
+    const prompt = `Read this document image carefully. Return ONLY valid JSON with this schema:
+{
+  "document_type": "",
+  "holder_name": "",
+  "document_number": "",
+  "issue_date": "",
+  "expiry_date": "",
+  "issuing_authority": "",
+  "summary": "",
+  "confidence": 0.0,
+  "extracted_text": ""
+}
+
+File name: ${filename || 'uploaded image'}
+Use empty strings for unknown fields. Do not invent values.`;
+    const raw = await askOllamaVision(prompt, base64);
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) return res.json({ raw });
+    res.json(JSON.parse(match[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/ollama', async (req, res) => {
   const { prompt, model } = req.body;
   try {

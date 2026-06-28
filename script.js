@@ -11,6 +11,8 @@ const state = {
   activeTab: 'upload',
 };
 
+const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
+
 const SYSTEM_PROMPT = `You are MyDocVault — an offline, privacy-first document assistant.
 CORE RULES:
 1. Answer ONLY from the documents provided in this conversation. Never guess or fabricate.
@@ -113,11 +115,12 @@ function readAndProcess(file, id, item) {
 
       const doc = { id, name: file.name, size: file.size, mimeType, base64, extracted };
       state.documents.push(doc);
+      await saveDocument(doc);
       updateVaultStats();
       renderVault();
     } catch (err) {
       setProgress(id, 100, 'error');
-      document.getElementById(`qs-${id}`).textContent = 'Error';
+      document.getElementById(`qs-${id}`).textContent = `Error: ${err.message}`;
       document.getElementById(`qs-${id}`).className = 'queue-status error';
       console.error('Extraction failed:', err);
     }
@@ -132,7 +135,7 @@ function setProgress(id, pct, _label) {
 
 // ── ANTHROPIC API ─────────────────────────────────────────────
 async function callApi(messages, extraSystemNote = '') {
-  const res = await fetch('/api/ask', {
+  const res = await fetch(`${API_BASE}/api/ask`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -140,7 +143,16 @@ async function callApi(messages, extraSystemNote = '') {
       messages,
     }),
   });
-  if (!res.ok) throw new Error(`API error ${res.status}`);
+  if (!res.ok) {
+    let message = `API error ${res.status}`;
+    try {
+      const error = await res.json();
+      message = error.error || message;
+    } catch {
+      // Keep the generic HTTP status message when the response is not JSON.
+    }
+    throw new Error(message);
+  }
   const data = await res.json();
   return data.content?.[0]?.text || '';
 }
@@ -149,30 +161,135 @@ async function callApiExtract(base64, mimeType, filename) {
   const isImage = mimeType.startsWith('image/');
   const isPdf   = mimeType === 'application/pdf';
 
-  let contentPart;
-  if (isImage) {
-    contentPart = { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } };
-  } else if (isPdf) {
-    contentPart = { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } };
-  } else {
+  if (!isImage && !isPdf) {
     throw new Error('Unsupported file type');
   }
 
-  const messages = [
-    {
-      role: 'user',
-      content: [
-        contentPart,
-        { type: 'text', text: `This file is named "${filename}". Extract all structured data and return ONLY the JSON schema defined in your instructions. No other text.` },
-      ],
-    },
-  ];
+  let text = '';
+  try {
+    text = await extractTextLocally(base64, mimeType);
+  } catch (err) {
+    console.warn('Local text extraction failed, continuing with upload fallback:', err);
+  }
+  const fallback = {
+    document_type: guessDocumentType(filename, text),
+    holder_name: '',
+    document_number: '',
+    issue_date: '',
+    expiry_date: '',
+    issuing_authority: '',
+    summary: text
+      ? `Local text extraction completed. Preview: ${text.slice(0, 500)}`
+      : 'File uploaded. No readable text was found locally.',
+    confidence: text ? 0.4 : 0.1,
+    extracted_text: text,
+  };
 
-  const raw = await callApi(messages);
-  // Parse JSON from response
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error('No JSON in response');
-  return JSON.parse(match[0]);
+  if (!text && isImage) {
+    try {
+      const vision = await extractImageWithOllama(base64, filename);
+      return { ...fallback, ...vision };
+    } catch (err) {
+      console.warn('Ollama vision extraction unavailable, using fallback:', err);
+      return fallback;
+    }
+  }
+
+  if (!text) return fallback;
+
+  try {
+    const raw = await callApi([{
+      role: 'user',
+      content: `This file is named "${filename}". Extract structured data from this local OCR/PDF text and return ONLY valid JSON in the required schema.\n\n${text.slice(0, 12000)}`,
+    }]);
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) return fallback;
+    return { ...fallback, ...JSON.parse(match[0]), extracted_text: text };
+  } catch (err) {
+    console.warn('AI structuring unavailable, using local extraction fallback:', err);
+    return fallback;
+  }
+}
+
+async function extractImageWithOllama(base64, filename) {
+  const res = await fetch(`${API_BASE}/api/extract/vision`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ base64, filename }),
+  });
+
+  if (!res.ok) {
+    let message = `Ollama vision extraction failed (${res.status})`;
+    try {
+      const error = await res.json();
+      message = error.error || message;
+    } catch {
+      // Keep the generic HTTP status message when the response is not JSON.
+    }
+    throw new Error(message);
+  }
+
+  return res.json();
+}
+
+async function saveDocument(doc) {
+  await fetch(`${API_BASE}/api/docs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: doc.id,
+      name: doc.name,
+      size: doc.size,
+      mimeType: doc.mimeType,
+      extracted: doc.extracted,
+    }),
+  });
+}
+
+async function loadSavedDocuments() {
+  try {
+    const res = await fetch(`${API_BASE}/api/docs`);
+    if (!res.ok) return;
+    state.documents = await res.json();
+    updateVaultStats();
+    renderVault();
+  } catch (err) {
+    console.warn('Unable to load saved documents:', err);
+  }
+}
+
+async function extractTextLocally(base64, mimeType) {
+  const endpoint = mimeType === 'application/pdf' ? '/api/extract/pdf' : '/api/extract/ocr';
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ base64, mimeType }),
+  });
+
+  if (!res.ok) {
+    let message = `Local extraction failed (${res.status})`;
+    try {
+      const error = await res.json();
+      message = error.error || message;
+    } catch {
+      // Keep the generic HTTP status message when the response is not JSON.
+    }
+    throw new Error(message);
+  }
+
+  const data = await res.json();
+  return (data.text || '').trim();
+}
+
+function guessDocumentType(filename, text = '') {
+  const source = `${filename} ${text}`.toLowerCase();
+  if (source.includes('bus pass')) return 'Bus Pass';
+  if (source.includes('aadhaar') || source.includes('aadhar')) return 'Aadhaar';
+  if (source.includes('pan')) return 'PAN Card';
+  if (source.includes('passport')) return 'Passport';
+  if (source.includes('licence') || source.includes('license')) return 'Driving Licence';
+  if (source.includes('birth')) return 'Birth Certificate';
+  return 'Uploaded Document';
 }
 
 // ── VAULT RENDERING ───────────────────────────────────────────
@@ -259,10 +376,16 @@ async function sendMessage() {
   input.value = '';
   appendMsg('user', text);
 
+  if (!state.documents.length) {
+    appendMsg('assistant', 'Your vault is empty. Upload a PDF or image first, then I can answer from that document.');
+    return;
+  }
+
   // Build doc context
   const docContext = state.documents.map(d => {
     const ex = d.extracted || {};
-    return `Document: ${d.name}\nExtracted: ${JSON.stringify(ex)}`;
+    const extractedText = ex.extracted_text ? `\nReadable text:\n${ex.extracted_text.slice(0, 12000)}` : '';
+    return `Document: ${d.name}\nExtracted: ${JSON.stringify(ex)}${extractedText}`;
   }).join('\n\n---\n\n');
 
   const systemNote = docContext
@@ -274,6 +397,7 @@ async function sendMessage() {
 
   // Attach doc files
   state.documents.forEach(doc => {
+    if (!doc.base64) return;
     if (doc.mimeType.startsWith('image/')) {
       userContent.push({ type: 'image', source: { type: 'base64', media_type: doc.mimeType, data: doc.base64 } });
     } else if (doc.mimeType === 'application/pdf') {
@@ -298,7 +422,7 @@ async function sendMessage() {
     state.chatHistory.push({ role: 'assistant', content: reply });
   } catch (err) {
     removeTyping(typingId);
-    appendMsg('assistant', `⚠️ Error: ${err.message}. Make sure the server is running.`);
+    appendMsg('assistant', `Warning: ${err.message}. Start the server with npm start and open http://localhost:3000.`);
   }
 
   document.getElementById('send-btn').disabled = false;
@@ -413,3 +537,5 @@ function formatMarkdown(text) {
     .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
     .replace(/\n/g, '<br/>');
 }
+
+loadSavedDocuments();
