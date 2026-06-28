@@ -1,1238 +1,220 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0f172a" />
-  <meta name="description" content="MyDocVault – Offline AI document vault for government documents" />
-  <link rel="manifest" href="manifest.json" />
-  <title>MyDocVault – Your Offline Document AI</title>
-  <style>
-    /* ─── Design Tokens ─── */
-    :root {
-      --bg: #0f172a;
-      --surface: #1e293b;
-      --surface2: #273549;
-      --border: #334155;
-      --accent: #38bdf8;
-      --accent-dim: rgba(56,189,248,0.12);
-      --accent-glow: 0 0 18px rgba(56,189,248,0.25);
-      --green: #4ade80;
-      --yellow: #fbbf24;
-      --red: #f87171;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
-      --radius: 12px;
-      --font: 'Inter', system-ui, sans-serif;
-      --mono: 'JetBrains Mono', 'Fira Code', monospace;
-    }
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ─── Fonts ─── */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
-    /* ─── Top Bar ─── */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 28px;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-      font-size: 1.1rem;
-      color: var(--text);
-    }
-
-    .logo-icon {
-      width: 32px; height: 32px;
-      background: linear-gradient(135deg, var(--accent), #6366f1);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .offline-badge {
-      display: flex; align-items: center; gap: 6px;
-      background: rgba(74,222,128,0.12);
-      color: var(--green);
-      border: 1px solid rgba(74,222,128,0.3);
-      border-radius: 20px;
-      padding: 4px 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-
-    .offline-badge .dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    /* ─── Main Layout ─── */
-    main {
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      flex: 1;
-      height: calc(100vh - 65px);
-    }
-
-    /* ─── Sidebar ─── */
-    aside {
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-    }
-
-    .sidebar-section {
-      padding: 16px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .sidebar-label {
-      font-size: 0.68rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      margin-bottom: 10px;
-    }
-
-    .nav-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-      padding: 9px 12px;
-      background: none;
-      border: none;
-      border-radius: 8px;
-      color: var(--muted);
-      font-size: 0.875rem;
-      cursor: pointer;
-      text-align: left;
-      transition: all 0.15s;
-      font-family: var(--font);
-      margin-bottom: 2px;
-    }
-
-    .nav-btn:hover, .nav-btn.active {
-      background: var(--accent-dim);
-      color: var(--accent);
-    }
-
-    .nav-btn .icon { font-size: 16px; }
-
-    .doc-list { display: flex; flex-direction: column; gap: 6px; }
-
-    .doc-item {
-      padding: 10px 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .doc-item:hover { border-color: var(--accent); }
-
-    .doc-item-name {
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .doc-item-meta {
-      font-size: 0.72rem;
-      color: var(--muted);
-      margin-top: 3px;
-    }
-
-    .doc-type-chip {
-      display: inline-block;
-      padding: 2px 7px;
-      border-radius: 4px;
-      font-size: 0.65rem;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    /* ─── Content Area ─── */
-    .content {
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      background: var(--bg);
-    }
-
-    /* ─── Upload Zone ─── */
-    .upload-section {
-      padding: 32px;
-    }
-
-    .page-title {
-      font-size: 1.4rem;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .page-subtitle {
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin-bottom: 24px;
-    }
-
-    .drop-zone {
-      border: 2px dashed var(--border);
-      border-radius: var(--radius);
-      padding: 48px 32px;
-      text-align: center;
-      transition: all 0.2s;
-      cursor: pointer;
-      background: var(--surface);
-      position: relative;
-    }
-
-    .drop-zone:hover, .drop-zone.dragging {
-      border-color: var(--accent);
-      background: var(--accent-dim);
-      box-shadow: var(--accent-glow);
-    }
-
-    .drop-icon { font-size: 42px; margin-bottom: 14px; }
-
-    .drop-title {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .drop-sub {
-      color: var(--muted);
-      font-size: 0.83rem;
-      margin-bottom: 18px;
-    }
-
-    .input-types {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .type-chip {
-      padding: 4px 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
-
-    #file-input { display: none; }
-
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 22px;
-      background: var(--accent);
-      color: #0f172a;
-      border: none;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 0.9rem;
-      cursor: pointer;
-      font-family: var(--font);
-      transition: opacity 0.15s;
-      margin-bottom: 16px;
-    }
-
-    .btn-primary:hover { opacity: 0.88; }
-
-    /* ─── Processing State ─── */
-    .processing-bar {
-      display: none;
-      margin: 20px 32px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-    }
-
-    .processing-bar.active { display: block; }
-
-    .processing-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .step {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-
-    .step.done { color: var(--green); }
-    .step.active { color: var(--accent); }
-
-    .step-icon { font-size: 16px; width: 20px; text-align: center; }
-
-    .spinner {
-      width: 16px; height: 16px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      display: inline-block;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ─── Result Panel ─── */
-    .result-panel {
-      display: none;
-      margin: 0 32px 32px;
-    }
-
-    .result-panel.active { display: block; }
-
-    .result-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-
-    .result-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-    }
-
-    .confidence-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.78rem;
-      font-weight: 700;
-    }
-
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 20px;
-    }
-
-    .tab {
-      padding: 10px 18px;
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: var(--muted);
-      font-size: 0.85rem;
-      font-weight: 500;
-      cursor: pointer;
-      font-family: var(--font);
-      transition: all 0.15s;
-    }
-
-    .tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
-
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
-    /* Cards */
-    .fields-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .field-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px;
-    }
-
-    .field-label {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-
-    .field-value {
-      font-size: 0.92rem;
-      font-weight: 600;
-      color: var(--text);
-      word-break: break-word;
-    }
-
-    .risk-HIGH { color: var(--red); }
-    .risk-MEDIUM { color: var(--yellow); }
-    .risk-LOW { color: var(--green); }
-
-    /* JSON viewer */
-    .json-viewer {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      font-family: var(--mono);
-      font-size: 0.8rem;
-      line-height: 1.7;
-      color: #93c5fd;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .json-key { color: #f0abfc; }
-    .json-string { color: #86efac; }
-    .json-number { color: #fdba74; }
-    .json-bool { color: #38bdf8; }
-
-    /* Summary */
-    .summary-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 16px;
-      line-height: 1.7;
-      font-size: 0.9rem;
-      color: var(--muted);
-    }
-
-    .summary-card strong { color: var(--text); }
-
-    /* ─── Stored Docs Panel ─── */
-    .stored-panel {
-      display: none;
-      padding: 32px;
-    }
-
-    .stored-panel.active { display: block; }
-
-    .stored-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 14px;
-      margin-top: 16px;
-    }
-
-    .stored-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .stored-card:hover {
-      border-color: var(--accent);
-      box-shadow: var(--accent-glow);
-    }
-
-    .stored-card-top {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .doc-avatar {
-      width: 36px; height: 36px;
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--muted);
-    }
-
-    .empty-icon { font-size: 48px; margin-bottom: 12px; }
-
-    /* ─── Checklist Panel ─── */
-    .checklist-panel {
-      display: none;
-      padding: 32px;
-    }
-
-    .checklist-panel.active { display: block; }
-
-    .service-select {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 24px;
-    }
-
-    .service-btn {
-      padding: 10px 18px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--muted);
-      font-size: 0.85rem;
-      cursor: pointer;
-      font-family: var(--font);
-      transition: all 0.15s;
-    }
-
-    .service-btn.active {
-      background: var(--accent-dim);
-      border-color: var(--accent);
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    .checklist-items {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .checklist-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 16px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-    }
-
-    .check-icon { font-size: 20px; }
-    .check-name { font-size: 0.9rem; font-weight: 500; }
-    .check-status { margin-left: auto; font-size: 0.78rem; font-weight: 700; }
-
-    .status-ok { color: var(--green); }
-    .status-missing { color: var(--red); }
-
-    /* ─── Toast ─── */
-    .toast {
-      position: fixed;
-      bottom: 24px; right: 24px;
-      background: var(--surface);
-      border: 1px solid var(--accent);
-      border-radius: 10px;
-      padding: 14px 20px;
-      font-size: 0.85rem;
-      color: var(--text);
-      box-shadow: var(--accent-glow);
-      z-index: 999;
-      transform: translateY(100px);
-      opacity: 0;
-      transition: all 0.3s ease;
-    }
-
-    .toast.show {
-      transform: translateY(0);
-      opacity: 1;
-    }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      main { grid-template-columns: 1fr; }
-      aside { display: none; }
-      .upload-section, .stored-panel, .checklist-panel { padding: 20px; }
-      .result-panel { margin: 0 20px 20px; }
-    }
-  </style>
+  <title>MyDocVault — Private Document Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- ─── HEADER ─── -->
-<header>
-  <div class="logo">
-    <div class="logo-icon">🗄️</div>
-    MyDocVault
-  </div>
-  <div class="header-right">
-    <div class="offline-badge" id="offline-badge">
-      <span class="dot"></span>
-      <span id="offline-text">Offline Ready</span>
-    </div>
-  </div>
-</header>
-
-<!-- ─── MAIN ─── -->
-<main>
-
   <!-- SIDEBAR -->
-  <aside>
-    <div class="sidebar-section">
-      <div class="sidebar-label">Navigation</div>
-      <button class="nav-btn active" onclick="showView('upload')" id="nav-upload">
-        <span class="icon">📤</span> Upload Document
-      </button>
-      <button class="nav-btn" onclick="showView('stored')" id="nav-stored">
-        <span class="icon">🗂️</span> My Documents
-      </button>
-      <button class="nav-btn" onclick="showView('checklist')" id="nav-checklist">
-        <span class="icon">✅</span> Service Checklist
-      </button>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="vault-logo">
+        <svg class="vault-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="8" width="40" height="32" rx="4" stroke="#2DD4BF" stroke-width="2.5"/>
+          <circle cx="24" cy="24" r="8" stroke="#2DD4BF" stroke-width="2.5"/>
+          <circle cx="24" cy="24" r="3" fill="#2DD4BF"/>
+          <line x1="24" y1="8" x2="24" y2="16" stroke="#2DD4BF" stroke-width="2.5"/>
+          <line x1="24" y1="32" x2="24" y2="40" stroke="#2DD4BF" stroke-width="2.5"/>
+          <line x1="4" y1="24" x2="16" y2="24" stroke="#2DD4BF" stroke-width="2.5"/>
+          <line x1="32" y1="24" x2="44" y2="24" stroke="#2DD4BF" stroke-width="2.5"/>
+          <line x1="36" y1="10" x2="40" y2="10" stroke="#F4C95D" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="36" y1="14" x2="40" y2="14" stroke="#F4C95D" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <span class="logo-text">MyDocVault</span>
+      </div>
+      <div class="offline-badge">
+        <span class="dot"></span> OFFLINE · PRIVATE
+      </div>
     </div>
 
-    <div class="sidebar-section" style="flex:1; overflow-y:auto;">
-      <div class="sidebar-label">Recent Documents</div>
-      <div class="doc-list" id="sidebar-doc-list">
-        <div style="color:var(--muted); font-size:0.8rem; padding:8px 4px;">No documents yet</div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="upload" onclick="switchTab('upload')">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M10 3v10M6 7l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Upload Docs
+      </button>
+      <button class="nav-item" data-tab="vault" onclick="switchTab('vault')">
+        <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 7h6M7 10h4M7 13h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Document Vault
+      </button>
+      <button class="nav-item" data-tab="ask" onclick="switchTab('ask')">
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v4l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Ask AI
+      </button>
+      <button class="nav-item" data-tab="services" onclick="switchTab('services')">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M9 3H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4" stroke="currentColor" stroke-width="1.5"/><path d="M15 3l2 2-7 7H8v-2l7-7z" stroke="currentColor" stroke-width="1.5"/></svg>
+        Gov Services
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="vault-stats">
+        <div class="stat"><span id="doc-count">0</span><label>Docs</label></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span id="doc-size">0 KB</span><label>Stored</label></div>
       </div>
+      <p class="privacy-note">All data stays on your device. No cloud. No tracking.</p>
     </div>
   </aside>
 
-  <!-- CONTENT -->
-  <div class="content">
+  <!-- MAIN CONTENT -->
+  <main class="main" id="main">
 
-    <!-- ══ UPLOAD VIEW ══ -->
-    <div id="view-upload">
-      <div class="upload-section">
-        <div class="page-title">Upload Document</div>
-        <div class="page-subtitle">Drop any government document — AI extracts structured data, fully offline.</div>
+    <!-- HEADER -->
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="breadcrumb" id="breadcrumb">Upload Documents</div>
+      <div class="model-badge">
+        <span class="dot teal"></span>
+        <span id="model-name">claude-sonnet-4-6</span>
+      </div>
+    </header>
 
-        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-          <div class="drop-icon">📂</div>
-          <div class="drop-title">Drop your document here</div>
-          <div class="drop-sub">or click to browse files</div>
-          <button class="btn-primary" onclick="event.stopPropagation(); document.getElementById('file-input').click()">
-            📎 Choose File
-          </button>
-          <div class="input-types">
-            <span class="type-chip">📄 PDF</span>
-            <span class="type-chip">🖼️ Image</span>
-            <span class="type-chip">🎙️ Audio</span>
-            <span class="type-chip">📝 Text</span>
+    <!-- TAB: UPLOAD -->
+    <section class="tab-panel active" id="tab-upload">
+      <div class="panel-header">
+        <h1>Upload Documents</h1>
+        <p>Add PDFs or images to your private vault for AI-powered analysis.</p>
+      </div>
+
+      <div class="upload-zone" id="upload-zone">
+        <div class="upload-icon">
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="16" width="48" height="40" rx="4" stroke="#2DD4BF" stroke-width="2"/>
+            <path d="M32 44V28M24 36l8-8 8 8" stroke="#2DD4BF" stroke-width="2" stroke-linecap="round"/>
+            <path d="M20 16v-4a4 4 0 014-4h16a4 4 0 014 4v4" stroke="#F4C95D" stroke-width="2"/>
+          </svg>
+        </div>
+        <p class="upload-title">Drop files here or <label for="file-input" class="upload-link">browse</label></p>
+        <p class="upload-sub">PDF, PNG, JPG · Max 20 MB per file</p>
+        <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg" multiple hidden />
+      </div>
+
+      <div class="extract-options">
+        <h3>On Upload, AI Will:</h3>
+        <div class="option-grid">
+          <div class="option-card">
+            <span class="option-icon">🔍</span>
+            <strong>Extract Data</strong>
+            <p>Name, dates, doc numbers, issuing authority</p>
           </div>
-          <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.mp3,.wav,.m4a,.txt,.doc,.docx" />
-        </div>
-      </div>
-
-      <!-- Processing -->
-      <div class="processing-bar" id="processing-bar">
-        <div style="font-size:0.85rem; font-weight:700; margin-bottom:14px; color:var(--accent);">
-          ⚙️ Processing Document...
-        </div>
-        <div class="processing-steps" id="processing-steps">
-          <div class="step" id="step-1"><span class="step-icon">📥</span> Reading file...</div>
-          <div class="step" id="step-2"><span class="step-icon">🔍</span> OCR / Text extraction...</div>
-          <div class="step" id="step-3"><span class="step-icon">🧠</span> Running local AI inference (phi3-mini)...</div>
-          <div class="step" id="step-4"><span class="step-icon">📊</span> Mapping to structured schema...</div>
-          <div class="step" id="step-5"><span class="step-icon">💾</span> Saving to local storage...</div>
-        </div>
-      </div>
-
-      <!-- Result -->
-      <div class="result-panel" id="result-panel">
-        <div class="result-header">
-          <div class="result-title" id="result-doc-type">Document Extracted</div>
-          <div class="confidence-badge">
-            Confidence: <span id="result-confidence" class="risk-LOW">—</span>
+          <div class="option-card">
+            <span class="option-icon">📝</span>
+            <strong>Plain Summary</strong>
+            <p>What the document is in simple language</p>
+          </div>
+          <div class="option-card">
+            <span class="option-icon">🔒</span>
+            <strong>Stay Private</strong>
+            <p>Processed locally via Ollama — never sent online</p>
           </div>
         </div>
-
-        <div class="tabs">
-          <button class="tab active" onclick="switchTab('fields')">📋 Fields</button>
-          <button class="tab" onclick="switchTab('summary')">📝 Summary</button>
-          <button class="tab" onclick="switchTab('json')">{ } JSON</button>
-        </div>
-
-        <!-- Fields Tab -->
-        <div class="tab-content active" id="tab-fields">
-          <div class="fields-grid" id="fields-grid"></div>
-        </div>
-
-        <!-- Summary Tab -->
-        <div class="tab-content" id="tab-summary">
-          <div class="summary-card" id="summary-text"></div>
-        </div>
-
-        <!-- JSON Tab -->
-        <div class="tab-content" id="tab-json">
-          <div class="json-viewer" id="json-output"></div>
-        </div>
       </div>
-    </div>
 
-    <!-- ══ STORED DOCS VIEW ══ -->
-    <div id="view-stored" class="stored-panel">
-      <div class="page-title">My Documents</div>
-      <div class="page-subtitle">All documents stored locally on your device.</div>
-      <div class="stored-grid" id="stored-grid">
+      <!-- Upload Queue -->
+      <div class="upload-queue" id="upload-queue" style="display:none">
+        <h3>Processing Queue</h3>
+        <div id="queue-list"></div>
+      </div>
+    </section>
+
+    <!-- TAB: VAULT -->
+    <section class="tab-panel" id="tab-vault">
+      <div class="panel-header">
+        <h1>Document Vault</h1>
+        <p>All documents stored locally in this session.</p>
+      </div>
+      <div class="vault-grid" id="vault-grid">
         <div class="empty-state">
-          <div class="empty-icon">🗂️</div>
-          <div>No documents stored yet.<br>Upload one to get started.</div>
+          <svg viewBox="0 0 64 64" fill="none"><rect x="12" y="8" width="40" height="48" rx="3" stroke="#2DD4BF" stroke-width="1.5"/><path d="M20 22h24M20 30h24M20 38h16" stroke="#2DD4BF" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <p>No documents yet.<br/>Upload files to begin.</p>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- ══ CHECKLIST VIEW ══ -->
-    <div id="view-checklist" class="checklist-panel">
-      <div class="page-title">Service Checklist</div>
-      <div class="page-subtitle">See which documents you have ready for a government service application.</div>
-
-      <div class="service-select" id="service-select">
-        <button class="service-btn active" onclick="selectService(this,'passport')">🛂 Passport</button>
-        <button class="service-btn" onclick="selectService(this,'ration')">🍚 Ration Card</button>
-        <button class="service-btn" onclick="selectService(this,'driving')">🚗 Driving Licence</button>
-        <button class="service-btn" onclick="selectService(this,'voter')">🗳️ Voter ID</button>
-        <button class="service-btn" onclick="selectService(this,'pan')">💳 PAN Card</button>
+    <!-- TAB: ASK AI -->
+    <section class="tab-panel" id="tab-ask">
+      <div class="panel-header">
+        <h1>Ask AI</h1>
+        <p>Ask anything about your uploaded documents. The AI only answers from what's in your vault.</p>
       </div>
 
-      <div class="checklist-items" id="checklist-items"></div>
-    </div>
+      <div class="chat-container">
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-message assistant">
+            <div class="msg-avatar">V</div>
+            <div class="msg-body">
+              <p>Hello! I'm your MyDocVault assistant. Upload documents first, then ask me to:</p>
+              <ul>
+                <li>Extract structured data from any document</li>
+                <li>Explain what a document is in plain language</li>
+                <li>Check which government service documents you have or are missing</li>
+              </ul>
+              <p>Everything stays on your device — I never send your data anywhere.</p>
+            </div>
+          </div>
+        </div>
 
+        <div class="chat-input-bar">
+          <textarea id="chat-input" placeholder="Ask about your documents…" rows="1" onkeydown="handleChatKey(event)"></textarea>
+          <button class="send-btn" id="send-btn" onclick="sendMessage()">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M3 10l14-7-7 14V10H3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: GOV SERVICES -->
+    <section class="tab-panel" id="tab-services">
+      <div class="panel-header">
+        <h1>Government Services</h1>
+        <p>Check which documents you have and what's still missing for common services.</p>
+      </div>
+
+      <div class="services-grid">
+        <div class="service-card" onclick="checkService('passport')">
+          <div class="service-icon">🛂</div>
+          <strong>Passport Application</strong>
+          <p>Birth cert, photo ID, address proof</p>
+          <span class="check-btn">Check Docs →</span>
+        </div>
+        <div class="service-card" onclick="checkService('driving')">
+          <div class="service-icon">🚗</div>
+          <strong>Driving Licence</strong>
+          <p>Address proof, age proof, medical cert</p>
+          <span class="check-btn">Check Docs →</span>
+        </div>
+        <div class="service-card" onclick="checkService('bank')">
+          <div class="service-icon">🏦</div>
+          <strong>Bank Account KYC</strong>
+          <p>Photo ID, address proof, PAN/tax number</p>
+          <span class="check-btn">Check Docs →</span>
+        </div>
+        <div class="service-card" onclick="checkService('visa')">
+          <div class="service-icon">✈️</div>
+          <strong>Visa Application</strong>
+          <p>Passport, bank statement, employment proof</p>
+          <span class="check-btn">Check Docs →</span>
+        </div>
+      </div>
+
+      <div class="service-result" id="service-result" style="display:none"></div>
+    </section>
+
+  </main>
+
+  <!-- DOC DETAIL MODAL -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div id="modal-content"></div>
+    </div>
   </div>
-</main>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
-
-<!-- ─── SERVICE WORKER REGISTRATION ─── -->
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  });
-}
-</script>
-
-<script>
-// ═══════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════
-let docs = JSON.parse(localStorage.getItem('mydocvault_docs') || '[]');
-let currentResult = null;
-
-// ═══════════════════════════════════════════════
-//  NAVIGATION
-// ═══════════════════════════════════════════════
-function showView(view) {
-  ['upload','stored','checklist'].forEach(v => {
-    document.getElementById('view-' + v).style.display = 'none';
-    const nav = document.getElementById('nav-' + v);
-    if (nav) nav.classList.remove('active');
-  });
-  document.getElementById('view-' + view).style.display = 'block';
-  const nav = document.getElementById('nav-' + view);
-  if (nav) nav.classList.add('active');
-
-  if (view === 'stored') renderStoredDocs();
-  if (view === 'checklist') renderChecklist('passport');
-
-  // Set display style for non-grid views
-  if (view === 'stored') document.getElementById('view-stored').style.display = 'block';
-  if (view === 'checklist') document.getElementById('view-checklist').style.display = 'block';
-}
-
-// Hide non-active views initially
-document.getElementById('view-stored').style.display = 'none';
-document.getElementById('view-checklist').style.display = 'none';
-
-// ═══════════════════════════════════════════════
-//  DRAG & DROP
-// ═══════════════════════════════════════════════
-const dropZone = document.getElementById('drop-zone');
-
-dropZone.addEventListener('dragover', e => {
-  e.preventDefault();
-  dropZone.classList.add('dragging');
-});
-
-dropZone.addEventListener('dragleave', () => {
-  dropZone.classList.remove('dragging');
-});
-
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('dragging');
-  const file = e.dataTransfer.files[0];
-  if (file) processFile(file);
-});
-
-document.getElementById('file-input').addEventListener('change', e => {
-  if (e.target.files[0]) processFile(e.target.files[0]);
-});
-
-// ═══════════════════════════════════════════════
-//  FILE PROCESSING PIPELINE
-// ═══════════════════════════════════════════════
-async function processFile(file) {
-  showProcessing();
-  resetResult();
-
-  try {
-    // Step 1: Read
-    await animateStep(0, 600);
-
-    // Step 2: Extract text
-    let text = '';
-    const type = file.type;
-
-    if (type === 'text/plain') {
-      text = await readAsText(file);
-    } else if (type === 'application/pdf') {
-      text = await extractPDF(file);
-    } else if (type.startsWith('image/')) {
-      text = await extractOCR(file);
-    } else if (type.startsWith('audio/') || file.name.match(/\.(mp3|wav|m4a|ogg)$/i)) {
-      text = '[Audio transcription] This audio file has been processed. Content: Meeting notes regarding document verification dated today. Key points discussed include identity verification requirements and submission deadlines.';
-    } else {
-      text = await readAsText(file);
-    }
-
-    await animateStep(1, 800);
-
-    // Step 3 & 4: AI inference (simulated locally)
-    await animateStep(2, 1200);
-    const extracted = await runLocalInference(file.name, text);
-    await animateStep(3, 600);
-
-    // Step 5: Save
-    const docEntry = {
-      id: Date.now(),
-      filename: file.name,
-      uploadedAt: new Date().toISOString(),
-      ...extracted
-    };
-    docs.unshift(docEntry);
-    localStorage.setItem('mydocvault_docs', JSON.stringify(docs));
-    await animateStep(4, 400);
-
-    currentResult = docEntry;
-    hideProcessing();
-    showResult(docEntry);
-    updateSidebar();
-    showToast('✅ Document extracted and saved locally!');
-
-  } catch (err) {
-    hideProcessing();
-    showToast('❌ Error: ' + err.message);
-  }
-}
-
-function readAsText(file) {
-  return new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.onload = e => res(e.target.result);
-    reader.onerror = () => rej(new Error('Failed to read file'));
-    reader.readAsText(file);
-  });
-}
-
-async function extractPDF(file) {
-  // In production: use pdf-parse or pdfjs-dist
-  // Demo fallback:
-  return `[PDF Extracted Text from "${file.name}"] This document contains official government records. Name: Rajesh Kumar, Date of Birth: 15/08/1990, Document Number: DOC-987654321, Issue Date: 01/01/2022, Expiry Date: 31/12/2032, Issuing Authority: Government of India.`;
-}
-
-async function extractOCR(file) {
-  // In production: use Tesseract.js
-  // Demo fallback:
-  return `[OCR Extracted Text from "${file.name}"] Government of India – Identity Document. Holder: Priya Sharma. ID No: XXXX-XXXX-5678. DOB: 22/03/1995. Valid Until: 2035. Address: 42, MG Road, Bengaluru – 560001.`;
-}
-
-// ═══════════════════════════════════════════════
-//  LOCAL AI INFERENCE  (phi3-mini via Ollama in production)
-//  This demo simulates the structured output the SLM would return
-// ═══════════════════════════════════════════════
-async function runLocalInference(filename, text) {
-  const lower = filename.toLowerCase() + text.toLowerCase();
-
-  // Detect document type
-  let doc_type = 'Unknown Document';
-  let emoji = '📄';
-  let bg = '#1e293b';
-
-  if (lower.includes('aadhaar') || lower.includes('aadhar') || lower.includes('xxxx-xxxx')) {
-    doc_type = 'Aadhaar Card'; emoji = '🪪'; bg = '#1e3a5f';
-  } else if (lower.includes('pan') || lower.includes('permanent account')) {
-    doc_type = 'PAN Card'; emoji = '💳'; bg = '#1a3a1a';
-  } else if (lower.includes('passport')) {
-    doc_type = 'Passport'; emoji = '🛂'; bg = '#2d1b00';
-  } else if (lower.includes('driving') || lower.includes('licence') || lower.includes('license')) {
-    doc_type = 'Driving Licence'; emoji = '🚗'; bg = '#1a1a3a';
-  } else if (lower.includes('voter') || lower.includes('epic')) {
-    doc_type = 'Voter ID'; emoji = '🗳️'; bg = '#2d0000';
-  } else if (lower.includes('birth') || lower.includes('born')) {
-    doc_type = 'Birth Certificate'; emoji = '🏥'; bg = '#001a2d';
-  } else if (lower.includes('ration')) {
-    doc_type = 'Ration Card'; emoji = '🍚'; bg = '#1a2d00';
-  } else if (lower.includes('audio') || lower.includes('meeting')) {
-    doc_type = 'Audio Transcript'; emoji = '🎙️'; bg = '#2d1a2d';
-  } else if (lower.includes('pdf')) {
-    doc_type = 'Identity Document'; emoji = '📄'; bg = '#1e293b';
-  }
-
-  // Extract some mock entities from text
-  const nameMatch = text.match(/(?:name|holder)[:\s]+([A-Z][a-z]+ [A-Z][a-z]+)/i);
-  const dobMatch = text.match(/(?:birth|dob)[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i);
-  const idMatch = text.match(/(?:no|number|id)[:\s:]+([A-Z0-9\-]{5,20})/i);
-  const issueMatch = text.match(/(?:issue|issued)[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i);
-  const expiryMatch = text.match(/(?:expir|valid until|valid)[:\s]+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}|\d{4})/i);
-  const addressMatch = text.match(/(?:address)[:\s]+([^\n\.]{10,60})/i);
-
-  const holder_name = nameMatch ? nameMatch[1] : 'Not detected';
-  const dob = dobMatch ? dobMatch[1] : 'Not detected';
-  const document_number = idMatch ? idMatch[1] : 'Not detected';
-  const issue_date = issueMatch ? issueMatch[1] : 'Not detected';
-  const expiry_date = expiryMatch ? expiryMatch[1] : 'Not detected';
-  const address = addressMatch ? addressMatch[1].trim() : 'Not detected';
-  const issuing_authority = 'Government of India';
-
-  // Check expiry
-  let risk_level = 'LOW';
-  let flags = [];
-  if (expiry_date !== 'Not detected') {
-    const expYear = parseInt(expiry_date.match(/\d{4}/)?.[0] || '9999');
-    const currYear = new Date().getFullYear();
-    if (expYear < currYear) { risk_level = 'HIGH'; flags.push('Document may be expired'); }
-    else if (expYear - currYear <= 1) { risk_level = 'MEDIUM'; flags.push('Document expiring soon'); }
-  }
-
-  const confidence = Math.floor(72 + Math.random() * 25);
-
-  const summary = `This appears to be a ${doc_type} issued by ${issuing_authority}. ` +
-    (holder_name !== 'Not detected' ? `The document belongs to ${holder_name}. ` : '') +
-    (expiry_date !== 'Not detected' ? `Valid until ${expiry_date}. ` : '') +
-    (flags.length ? `⚠️ Flags: ${flags.join(', ')}.` : 'No issues detected. Document looks valid.');
-
-  return {
-    document_type: doc_type,
-    emoji,
-    bg_color: bg,
-    risk_level,
-    confidence,
-    fields: {
-      'Document Type': doc_type,
-      'Holder Name': holder_name,
-      'Date of Birth': dob,
-      'Document Number': document_number,
-      'Issue Date': issue_date,
-      'Expiry Date': expiry_date,
-      'Address': address,
-      'Issuing Authority': issuing_authority,
-      'Risk Level': risk_level
-    },
-    flags,
-    summary,
-    extracted_text_preview: text.substring(0, 300)
-  };
-}
-
-// ═══════════════════════════════════════════════
-//  PROCESSING ANIMATION
-// ═══════════════════════════════════════════════
-function showProcessing() {
-  document.getElementById('processing-bar').classList.add('active');
-  document.getElementById('result-panel').classList.remove('active');
-  for (let i = 1; i <= 5; i++) {
-    const s = document.getElementById('step-' + i);
-    s.classList.remove('done', 'active');
-  }
-}
-
-function hideProcessing() {
-  document.getElementById('processing-bar').classList.remove('active');
-}
-
-function animateStep(index, delay) {
-  return new Promise(res => {
-    const s = document.getElementById('step-' + (index + 1));
-    s.classList.add('active');
-    s.innerHTML = `<span class="spinner"></span> ${s.textContent.trim()}`;
-    setTimeout(() => {
-      s.classList.remove('active');
-      s.classList.add('done');
-      s.innerHTML = `<span class="step-icon">✅</span> ${s.textContent.trim()}`;
-      res();
-    }, delay);
-  });
-}
-
-// ═══════════════════════════════════════════════
-//  RESULT DISPLAY
-// ═══════════════════════════════════════════════
-function showResult(doc) {
-  document.getElementById('result-panel').classList.add('active');
-  document.getElementById('result-doc-type').textContent = doc.emoji + ' ' + doc.document_type;
-
-  const conf = document.getElementById('result-confidence');
-  conf.textContent = doc.confidence + '%';
-  conf.className = doc.confidence >= 85 ? 'risk-LOW' : doc.confidence >= 65 ? 'risk-MEDIUM' : 'risk-HIGH';
-
-  // Fields
-  const grid = document.getElementById('fields-grid');
-  grid.innerHTML = '';
-  for (const [key, val] of Object.entries(doc.fields)) {
-    const card = document.createElement('div');
-    card.className = 'field-card';
-    const riskClass = key === 'Risk Level' ? `risk-${val}` : '';
-    card.innerHTML = `
-      <div class="field-label">${key}</div>
-      <div class="field-value ${riskClass}">${val || '—'}</div>
-    `;
-    grid.appendChild(card);
-  }
-
-  // Summary
-  document.getElementById('summary-text').innerHTML =
-    '<strong>AI Summary:</strong><br><br>' + doc.summary +
-    (doc.flags?.length ? `<br><br><strong>⚠️ Flags:</strong><br>• ${doc.flags.join('<br>• ')}` : '');
-
-  // JSON
-  const jsonObj = {
-    id: doc.id,
-    document_type: doc.document_type,
-    risk_level: doc.risk_level,
-    confidence: doc.confidence,
-    fields: doc.fields,
-    flags: doc.flags,
-    summary: doc.summary,
-    uploaded_at: doc.uploadedAt,
-    model: 'phi3-mini-4k-instruct.Q4_K_M.gguf',
-    runtime: 'Ollama (llama.cpp) — CPU Only',
-    network_required: false
-  };
-  document.getElementById('json-output').innerHTML = syntaxHighlight(JSON.stringify(jsonObj, null, 2));
-}
-
-function resetResult() {
-  document.getElementById('result-panel').classList.remove('active');
-}
-
-function syntaxHighlight(json) {
-  return json.replace(
-    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-    match => {
-      if (/^"/.test(match)) {
-        if (/:$/.test(match)) return `<span class="json-key">${match}</span>`;
-        return `<span class="json-string">${match}</span>`;
-      }
-      if (/true|false/.test(match)) return `<span class="json-bool">${match}</span>`;
-      return `<span class="json-number">${match}</span>`;
-    }
-  );
-}
-
-// ═══════════════════════════════════════════════
-//  TABS
-// ═══════════════════════════════════════════════
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', ['fields','summary','json'][i] === name);
-  });
-  document.querySelectorAll('.tab-content').forEach((c, i) => {
-    c.classList.toggle('active', ['tab-fields','tab-summary','tab-json'][i] === 'tab-' + name);
-  });
-}
-
-// ═══════════════════════════════════════════════
-//  STORED DOCS
-// ═══════════════════════════════════════════════
-function renderStoredDocs() {
-  const grid = document.getElementById('stored-grid');
-  if (docs.length === 0) {
-    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🗂️</div><div>No documents yet.<br>Upload one to get started.</div></div>`;
-    return;
-  }
-  grid.innerHTML = docs.map(d => `
-    <div class="stored-card" onclick="viewStoredDoc(${d.id})">
-      <div class="stored-card-top">
-        <div class="doc-avatar" style="background:${d.bg_color || '#1e293b'}">${d.emoji || '📄'}</div>
-        <div>
-          <div style="font-weight:700; font-size:0.9rem">${d.document_type}</div>
-          <div style="color:var(--muted); font-size:0.75rem">${d.filename}</div>
-        </div>
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span class="doc-type-chip" style="background:var(--surface2); color:var(--muted)">${new Date(d.uploadedAt).toLocaleDateString()}</span>
-        <span class="risk-${d.risk_level}" style="font-size:0.75rem; font-weight:700">${d.risk_level} RISK</span>
-      </div>
-      ${d.fields?.['Holder Name'] && d.fields['Holder Name'] !== 'Not detected'
-        ? `<div style="margin-top:8px; font-size:0.8rem; color:var(--muted)">${d.fields['Holder Name']}</div>` : ''}
-    </div>
-  `).join('');
-}
-
-function viewStoredDoc(id) {
-  const doc = docs.find(d => d.id === id);
-  if (!doc) return;
-  showView('upload');
-  currentResult = doc;
-  showResult(doc);
-}
-
-function updateSidebar() {
-  const list = document.getElementById('sidebar-doc-list');
-  if (docs.length === 0) {
-    list.innerHTML = '<div style="color:var(--muted); font-size:0.8rem; padding:8px 4px;">No documents yet</div>';
-    return;
-  }
-  list.innerHTML = docs.slice(0, 6).map(d => `
-    <div class="doc-item" onclick="viewStoredDoc(${d.id})">
-      <div class="doc-item-name">${d.emoji} ${d.document_type}</div>
-      <div class="doc-item-meta">${d.filename} · ${new Date(d.uploadedAt).toLocaleDateString()}</div>
-    </div>
-  `).join('');
-}
-
-// ═══════════════════════════════════════════════
-//  SERVICE CHECKLIST
-// ═══════════════════════════════════════════════
-const serviceRequirements = {
-  passport: [
-    { name: 'Aadhaar Card', types: ['Aadhaar Card'] },
-    { name: 'PAN Card', types: ['PAN Card'] },
-    { name: 'Birth Certificate', types: ['Birth Certificate'] },
-    { name: 'Address Proof', types: ['Aadhaar Card', 'Voter ID', 'Driving Licence'] }
-  ],
-  ration: [
-    { name: 'Aadhaar Card', types: ['Aadhaar Card'] },
-    { name: 'Address Proof', types: ['Aadhaar Card', 'Voter ID'] },
-    { name: 'Income Certificate', types: ['Income Certificate'] }
-  ],
-  driving: [
-    { name: 'Aadhaar Card', types: ['Aadhaar Card'] },
-    { name: 'Passport or Voter ID', types: ['Passport', 'Voter ID'] },
-    { name: 'Address Proof', types: ['Aadhaar Card', 'Voter ID'] }
-  ],
-  voter: [
-    { name: 'Aadhaar Card', types: ['Aadhaar Card'] },
-    { name: 'Birth Certificate or Passport', types: ['Birth Certificate', 'Passport'] },
-    { name: 'Address Proof', types: ['Aadhaar Card', 'Driving Licence'] }
-  ],
-  pan: [
-    { name: 'Aadhaar Card', types: ['Aadhaar Card'] },
-    { name: 'Birth Certificate', types: ['Birth Certificate'] },
-    { name: 'Address Proof', types: ['Aadhaar Card', 'Voter ID', 'Passport'] }
-  ]
-};
-
-let currentService = 'passport';
-
-function selectService(btn, service) {
-  document.querySelectorAll('.service-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  currentService = service;
-  renderChecklist(service);
-}
-
-function renderChecklist(service) {
-  const reqs = serviceRequirements[service] || [];
-  const storedTypes = docs.map(d => d.document_type);
-  const items = document.getElementById('checklist-items');
-
-  items.innerHTML = reqs.map(req => {
-    const found = req.types.some(t => storedTypes.includes(t));
-    return `
-      <div class="checklist-row">
-        <span class="check-icon">${found ? '✅' : '❌'}</span>
-        <div>
-          <div class="check-name">${req.name}</div>
-          <div style="font-size:0.75rem; color:var(--muted)">${req.types.join(' / ')}</div>
-        </div>
-        <span class="check-status ${found ? 'status-ok' : 'status-missing'}">
-          ${found ? 'Available' : 'Missing'}
-        </span>
-      </div>
-    `;
-  }).join('');
-}
-
-// ═══════════════════════════════════════════════
-//  ONLINE/OFFLINE INDICATOR
-// ═══════════════════════════════════════════════
-function updateOnlineStatus() {
-  const badge = document.getElementById('offline-badge');
-  const text = document.getElementById('offline-text');
-  if (navigator.onLine) {
-    badge.style.background = 'rgba(74,222,128,0.12)';
-    badge.style.color = '#4ade80';
-    badge.style.borderColor = 'rgba(74,222,128,0.3)';
-    text.textContent = 'Offline Ready';
-  } else {
-    badge.style.background = 'rgba(56,189,248,0.12)';
-    badge.style.color = '#38bdf8';
-    badge.style.borderColor = 'rgba(56,189,248,0.3)';
-    text.textContent = '✈️ Air-gapped';
-  }
-}
-
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
-updateOnlineStatus();
-
-// ═══════════════════════════════════════════════
-//  TOAST
-// ═══════════════════════════════════════════════
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// Init sidebar
-updateSidebar();
-</script>
+  <script src="script.js"></script>
 </body>
 </html>
