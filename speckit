@@ -1,0 +1,178 @@
+
+# MYDOCVAULT AI - Spec
+
+## 1. Overview
+
+GovVault AI is an offline-first AI-powered DigiLocker for securely storing government documents and helping users understand which documents they need to submit for a specific office, officer, or service. The system processes documents locally, extracts structured data, stores it safely, and provides a chatbot for simple explanations and guidance.
+
+## 2. Problem Statement
+
+Users often keep government documents in multiple places and do not know which document is needed for a particular application or verification process. This creates confusion, delays, and repeated visits to offices. GovVault AI solves this by organizing documents and providing a smart local assistant that can explain and recommend relevant documents.
+
+## 3. Goals
+
+- Store government documents securely in one place.
+- Extract document text and fields locally without external APIs.
+- Convert unstructured documents into structured JSON data.
+- Allow users to ask questions about their documents.
+- Support offline usage and CPU-friendly inference.
+
+## 4. Non-Goals
+
+- No cloud document processing.
+- No external AI APIs.
+- No real government portal integration in the hackathon version.
+- No multi-user enterprise workflow.
+- No advanced legal validation of documents.
+
+## 5. Target Users
+
+- Citizens storing personal government documents.
+- Students managing certificates and identity proofs.
+- Job seekers organizing ID and address documents.
+- Anyone who needs a secure offline document vault.
+
+## 6. Core User Stories
+
+### Story 1: Upload and store documents
+As a user, I want to upload my documents so that I can keep them safely in one local vault.
+
+### Story 2: Extract document details
+As a user, I want the system to read my document automatically so that I do not need to enter details manually.
+
+### Story 3: Ask document questions
+As a user, I want to ask the chatbot about my documents so that I can understand them easily.
+
+### Story 4: Find required documents
+As a user, I want the chatbot to tell me which documents are needed for a specific service so that I can prepare in advance.
+
+### Story 5: Search stored documents
+As a user, I want to search my stored files by name, type, or date so that I can retrieve them quickly.
+
+## 7. Functional Requirements
+
+- The app must accept PDF, image, and scanned document uploads.
+- The app must run OCR or text extraction locally.
+- The app must generate structured fields from the extracted content.
+- The app must store the original file and metadata locally.
+- The chatbot must answer only from stored documents and local rules.
+- The app must work even when the system is offline.
+
+## 8. System Workflow
+
+1. User uploads a document.
+2. The system detects the document type.
+3. OCR extracts text locally.
+4. The extractor identifies fields such as name, number, date, and authority.
+5. The data is normalized into a JSON schema.
+6. The file and metadata are saved in SQLite.
+7. The chatbot uses the local data to answer questions.
+
+## 9. Architecture
+
+### Frontend
+- Web interface for upload, view, and chat.
+- Document list and search panel.
+- Chat window for guidance.
+
+### Processing Layer
+- OCR engine for scanned files.
+- Text normalization and cleanup.
+- Field extraction and schema mapping.
+
+### AI Layer
+- Small local language model.
+- Prompting logic for document Q&A.
+- Optional retrieval from stored document metadata.
+
+### Storage Layer
+- SQLite for metadata and structured fields.
+- File system for original documents.
+- Optional local cache for recent queries.
+
+## 10. Data Schema
+
+Each document should be represented as:
+
+```json
+{
+  "document_id": "string",
+  "document_type": "Aadhaar | PAN | Certificate | Utility Bill | Other",
+  "holder_name": "string",
+  "document_number": "string",
+  "issue_date": "string",
+  "expiry_date": "string",
+  "issuing_authority": "string",
+  "extracted_text": "string",
+  "tags": ["string"],
+  "file_path": "string",
+  "created_at": "string",
+  "updated_at": "string"
+}
+```
+
+## 11. Chatbot Behavior
+
+- The chatbot should answer in simple language.
+- The chatbot should explain what a document is used for.
+- The chatbot should help users identify missing documents for a service.
+- The chatbot should not claim certainty if the document data is incomplete.
+- The chatbot should say when it needs more information from the user.
+
+## 12. Edge Cases
+
+- If OCR fails, the app should allow manual correction.
+- If a document is blurry, the app should show a retry or rescan message.
+- If the chatbot cannot find enough context, it should ask for clarification.
+- If the file format is unsupported, the app should show a clear error.
+- If the system is offline, core features should continue working.
+
+## 13. Validation Criteria
+
+The project will be considered successful if:
+
+- Documents can be uploaded and stored locally.
+- OCR and extraction work without internet.
+- Structured JSON is generated from documents.
+- The chatbot answers questions based on stored content.
+- The app remains functional in offline mode.
+- CPU usage and memory remain acceptable for a hackathon demo.
+
+## 14. Constraints
+
+- Must run locally.
+- Must not use OpenAI, Anthropic, or other external AI APIs.
+- Must support low-latency, CPU-optimized libraries.
+- Must keep document data private and offline.
+
+## 15. Work Division
+
+### Member 1
+- UI and chatbot flow.
+- README and final presentation.
+- Prompt design and demo script.
+
+### Member 2
+- OCR and ingestion pipeline.
+- SQLite schema and storage.
+- Extraction and normalization logic.
+
+## 16. Success Metrics
+
+- Document upload success rate.
+- Extraction accuracy on sample docs.
+- Chatbot answer relevance.
+- Time taken for offline processing.
+- Number of supported document types.
+
+## 17. Future Scope
+
+- Expiry reminders.
+- Multi-language OCR.
+- Role-based access.
+- Government checklist templates.
+- Encrypted export and backup.
+
+## 18. Conclusion
+
+GovVault AI is a private, offline-first document assistant that transforms unstructured government documents into structured, searchable, and useful data for everyday users.
