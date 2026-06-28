@@ -1,0 +1,176 @@
+# .gitlab-ci.yml — MyDocVault CI/CD Pipeline
+# 10 stages, run on the project's registered shell runner (macOS, arm64)
+
+stages:
+  - install
+  - lint
+  - syntax_check
+  - security_audit
+  - unit_test
+  - build
+  - dependency_check
+  - artifact_package
+  - integration_check
+  - deploy_notice
+
+# ════════════════════════════════════════
+# 1. INSTALL — pull down npm dependencies
+# ════════════════════════════════════════
+install_dependencies:
+  stage: install
+  script:
+    - echo "Installing dependencies..."
+    - npm install
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1 hour
+
+# ════════════════════════════════════════
+# 2. LINT — basic JS syntax / style check
+# ════════════════════════════════════════
+lint_code:
+  stage: lint
+  script:
+    - echo "Checking JavaScript files for obvious issues..."
+    - |
+      for file in server.js script.js services/*.js; do
+        if [ -f "$file" ]; then
+          echo "Checking $file"
+          node --check "$file" || echo "⚠️  Syntax warning in $file"
+        fi
+      done
+  allow_failure: true
+
+# ════════════════════════════════════════
+# 3. SYNTAX CHECK — confirm every JS file parses (real test, must pass)
+# ════════════════════════════════════════
+syntax_check:
+  stage: syntax_check
+  script:
+    - echo "Verifying all JavaScript files parse correctly..."
+    - |
+      FAILED=0
+      for file in $(find . -name "*.js" -not -path "./node_modules/*"); do
+        node --check "$file"
+        if [ $? -ne 0 ]; then
+          echo "❌ Syntax error in $file"
+          FAILED=1
+        fi
+      done
+      if [ $FAILED -eq 1 ]; then
+        echo "Syntax errors found."
+        exit 1
+      fi
+      echo "✅ All files passed syntax check."
+
+# ════════════════════════════════════════
+# 4. SECURITY AUDIT — npm audit for known vulnerabilities
+# ════════════════════════════════════════
+security_audit:
+  stage: security_audit
+  script:
+    - echo "Running npm audit..."
+    - npm audit --audit-level=high || echo "⚠️  Vulnerabilities found (non-blocking for now)"
+  allow_failure: true
+
+# ════════════════════════════════════════
+# 5. UNIT TEST — placeholder until a real test suite exists
+# ════════════════════════════════════════
+unit_test:
+  stage: unit_test
+  script:
+    - echo "Running unit tests..."
+    - |
+      if [ -f "package.json" ] && grep -q '"test"' package.json && ! grep -q '"test": "echo' package.json; then
+        npm test
+      else
+        echo "⚠️  No real test suite configured yet (package.json has no working 'test' script)."
+        echo "This stage is informational until tests are added."
+      fi
+  allow_failure: true
+
+# ════════════════════════════════════════
+# 6. BUILD — confirm the server actually boots without crashing
+# ════════════════════════════════════════
+build_check:
+  stage: build
+  script:
+    - echo "Starting server briefly to confirm it boots..."
+    - node server.js & SERVER_PID=$!
+    - sleep 4
+    - |
+      if kill -0 $SERVER_PID 2>/dev/null; then
+        echo "✅ Server started successfully (PID $SERVER_PID)"
+        kill $SERVER_PID
+      else
+        echo "❌ Server failed to start"
+        exit 1
+      fi
+
+# ════════════════════════════════════════
+# 7. DEPENDENCY CHECK — confirm required packages are present
+# ════════════════════════════════════════
+dependency_check:
+  stage: dependency_check
+  script:
+    - echo "Verifying required dependencies are installed..."
+    - |
+      REQUIRED="express cors"
+      for pkg in $REQUIRED; do
+        if [ -d "node_modules/$pkg" ]; then
+          echo "✅ $pkg present"
+        else
+          echo "❌ $pkg missing"
+          exit 1
+        fi
+      done
+
+# ════════════════════════════════════════
+# 8. ARTIFACT PACKAGE — bundle project files for handoff/demo
+# ════════════════════════════════════════
+artifact_package:
+  stage: artifact_package
+  script:
+    - echo "Packaging project files..."
+    - mkdir -p dist
+    - cp -r index.html style.css script.js server.js services package.json dist/ 2>/dev/null || true
+    - echo "✅ Packaged into dist/"
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+
+# ════════════════════════════════════════
+# 9. INTEGRATION CHECK — hit a real endpoint with curl
+# ════════════════════════════════════════
+integration_check:
+  stage: integration_check
+  script:
+    - echo "Booting server and testing /api/health endpoint..."
+    - node server.js & SERVER_PID=$!
+    - sleep 4
+    - |
+      RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health || echo "000")
+      echo "Response code: $RESPONSE"
+      kill $SERVER_PID 2>/dev/null || true
+      if [ "$RESPONSE" != "200" ]; then
+        echo "⚠️  /api/health did not return 200 (got $RESPONSE)"
+      else
+        echo "✅ /api/health responded successfully"
+      fi
+  allow_failure: true
+
+# ════════════════════════════════════════
+# 10. DEPLOY NOTICE — final stage, confirms pipeline completion
+# ════════════════════════════════════════
+deploy_notice:
+  stage: deploy_notice
+  script:
+    - echo "════════════════════════════════════════"
+    - echo "  Pipeline completed for MyDocVault"
+    - echo "  Branch: $CI_COMMIT_REF_NAME"
+    - echo "  Commit: $CI_COMMIT_SHORT_SHA"
+    - echo "  This project is not auto-deployed."
+    - echo "  Run 'node server.js' locally to use it."
+    - echo "════════════════════════════════════════"
