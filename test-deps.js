@@ -1,34 +1,26 @@
-try {
-  require('better-sqlite3');
-  console.log('better-sqlite3: OK');
-} catch(e) {
-  console.log('better-sqlite3: FAIL - ' + e.message);
-}
+const deps = [
+  'express',
+  'cors',
+  'better-sqlite3',
+  'tesseract.js',
+  'node-fetch',
+  'pdf-parse',
+  '@anthropic-ai/sdk'
+];
 
-try {
-  require('tesseract.js');
-  console.log('tesseract.js: OK');
-} catch(e) {
-  console.log('tesseract.js: FAIL - ' + e.message);
-}
+let failed = false;
+deps.forEach(dep => {
+  try {
+    require(dep);
+    console.log(`${dep}: OK`);
+  } catch (e) {
+    console.error(`${dep}: FAIL - ${e.message}`);
+    failed = true;
+  }
+});
 
-try {
-  const fetch = require('node-fetch');
-  console.log('node-fetch: OK');
-} catch(e) {
-  console.log('node-fetch: FAIL - ' + e.message);
+if (failed) {
+  process.exit(1);
 }
-
-try {
-  require('pdf-parse');
-  console.log('pdf-parse: OK');
-} catch(e) {
-  console.log('pdf-parse: FAIL - ' + e.message);
-}
-
-try {
-  require('@anthropic-ai/sdk');
-  console.log('@anthropic-ai/sdk: OK');
-} catch(e) {
-  console.log('@anthropic-ai/sdk: FAIL - ' + e.message);
-}
+console.log('All dependencies verified successfully.');
+process.exit(0);

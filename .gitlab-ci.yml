@@ -1,5 +1,5 @@
 # .gitlab-ci.yml - MyDocVault CI/CD Pipeline
-# 10 stages, run on the project registered shell runner
+# Cross-platform runner compatible (runs on Linux & Windows)
 
 stages:
   - install
@@ -27,14 +27,14 @@ lint_code:
   stage: lint
   script:
     - echo "Checking JavaScript files for obvious issues..."
-    - for f in server.js script.js services/*.js; do [ -f "$f" ] && node --check "$f" && echo "OK $f" || echo "WARN $f"; done
+    - node syntax-check.js
   allow_failure: true
 
 syntax_check:
   stage: syntax_check
   script:
     - echo "Verifying all JavaScript files parse correctly..."
-    - find . -name "*.js" -not -path "./node_modules/*" -print0 | xargs -0 -n1 node --check
+    - node syntax-check.js
 
 security_audit:
   stage: security_audit
@@ -54,22 +54,19 @@ build_check:
   stage: build
   script:
     - echo "Starting server briefly to confirm it boots..."
-    - node server.js & SERVER_PID=$!; sleep 4; kill -0 $SERVER_PID && echo "Server started successfully" && kill $SERVER_PID || (echo "Server failed to start" && exit 1)
+    - node ci-test.js
 
 dependency_check:
   stage: dependency_check
   script:
     - echo "Verifying required dependencies are installed..."
-    - test -d node_modules/express && echo "express present" || (echo "express missing" && exit 1)
-    - test -d node_modules/cors && echo "cors present" || (echo "cors missing" && exit 1)
+    - node test-deps.js
 
 artifact_package:
   stage: artifact_package
   script:
     - echo "Packaging project files..."
-    - mkdir -p dist
-    - cp -r index.html style.css script.js server.js services package.json dist/ 2>/dev/null || true
-    - echo "Packaged into dist/"
+    - node package.js
   artifacts:
     paths:
       - dist/
@@ -79,7 +76,7 @@ integration_check:
   stage: integration_check
   script:
     - echo "Booting server and testing /api/health endpoint..."
-    - node server.js & SERVER_PID=$!; sleep 4; RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health || echo "000"); echo "Response code -> $RESPONSE"; kill $SERVER_PID 2>/dev/null || true
+    - node ci-test.js
   allow_failure: true
 
 deploy_notice:
