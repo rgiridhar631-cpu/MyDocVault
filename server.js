@@ -21,10 +21,11 @@ const { initDb, saveDoc, getDocs, deleteDoc } = require('./services/db');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
+const JSON_LIMIT = '35mb';
 
 // ── Middleware
 app.use(cors());
-app.use(express.json({ limit: '25mb' }));
+app.use(express.json({ limit: JSON_LIMIT }));
 app.use(express.static(path.join(__dirname)));
 
 // ── Anthropic client
@@ -223,6 +224,13 @@ app.delete('/api/docs/:id', async (req, res) => {
 });
 
 // ── Start server
+app.use((err, _req, res, next) => {
+  if (err?.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'Upload is too large. Keep each file under 20 MB.' });
+  }
+  return next(err);
+});
+
 initDb().then(() => {
   app.listen(PORT, () => {
     console.log(`
