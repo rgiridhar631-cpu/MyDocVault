@@ -1,0 +1,5 @@
+{
+  "entry": ["server.js", "script.js", "sw.js"],
+  "project": ["**/*.js"],
+  "ignoreDependencies": ["nodemon"]
+}
