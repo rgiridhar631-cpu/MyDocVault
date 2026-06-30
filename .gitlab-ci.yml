@@ -28,10 +28,6 @@ install:
   stage: install
   script:
     - npm install
-  artifacts:
-    paths:
-      - node_modules/
-    expire_in: 1 hour
 
 # 2. Lint code
 lint:
