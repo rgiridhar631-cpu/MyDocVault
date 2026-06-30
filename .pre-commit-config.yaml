@@ -24,6 +24,11 @@ repos:
         files: \.(js|ts)$
         args: [--noEmit]
 
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.18.2
     hooks:
