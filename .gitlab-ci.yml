@@ -1,6 +1,5 @@
 # .gitlab-ci.yml - MyDocVault CI/CD Pipeline
 # Cross-platform runner compatible (runs on Linux & Windows)
-
 stages:
   - install
   - format
@@ -51,7 +50,6 @@ secret_scanning:
   script:
     - echo "Running gitleaks secrets scanner..."
     - node secret-scan.js
-    - # gitleaks detect --verbose --no-git
 
 commit_message_checking:
   stage: commit_check
