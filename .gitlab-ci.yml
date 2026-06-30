@@ -1,12 +1,17 @@
 # .gitlab-ci.yml - MyDocVault CI/CD Pipeline
-# 10 stages
+# Cross-platform runner compatible (runs on Linux & Windows)
 
 stages:
   - install
+  - format
   - lint
+  - type_check
+  - secret_scan
+  - commit_check
   - syntax_check
   - security_audit
-  - unit_test
+  - test
+  - coverage
   - build
   - dependency_check
   - artifact_package
@@ -23,46 +28,80 @@ install_dependencies:
       - node_modules/
     expire_in: 1 hour
 
+formatting_check:
+  stage: format
+  script:
+    - echo "Verifying Prettier code formatting..."
+    - npm run format:check
+
 lint_code:
   stage: lint
   script:
     - echo "Running ESLint styles check..."
     - npm run lint
-  allow_failure: true
 
-syntax_check:
+type_checking:
+  stage: type_check
+  script:
+    - echo "Running TypeScript/JSDoc type checking..."
+    - npm run type-check
+
+secret_scanning:
+  stage: secret_scan
+  script:
+    - echo "Running gitleaks secrets scanner..."
+    - node secret-scan.js
+    - # gitleaks detect --verbose --no-git
+
+commit_message_checking:
+  stage: commit_check
+  script:
+    - echo "Checking commit message semantics..."
+    - node check-commits.js
+
+syntax_checking:
   stage: syntax_check
   script:
     - echo "Verifying all JavaScript files parse correctly..."
     - node syntax-check.js
 
-security_audit:
+security_auditing:
   stage: security_audit
   script:
     - echo "Running npm package security audit..."
     - npm audit --audit-level=high || echo "Vulnerabilities found - non blocking for now"
   allow_failure: true
 
-unit_test:
-  stage: unit_test
+unit_testing:
+  stage: test
   script:
-    - echo "Running unit tests..."
-    - npm test || echo "No real test suite configured yet - informational only"
-  allow_failure: true
+    - echo "Running Jest unit tests..."
+    - npm run test:coverage
+  artifacts:
+    paths:
+      - coverage/
+    expire_in: 1 week
 
-build_check:
+coverage_reporting:
+  stage: coverage
+  script:
+    - echo "Reporting coverage results..."
+    - npm run test:coverage
+  coverage: '/All files\s*\|\s*([\d\.]+)/'
+
+build_checking:
   stage: build
   script:
     - echo "Starting server briefly to confirm it boots..."
     - node ci-test.js
 
-dependency_check:
+dependency_checking:
   stage: dependency_check
   script:
     - echo "Verifying required dependencies are installed..."
     - node test-deps.js
 
-artifact_package:
+artifact_packaging:
   stage: artifact_package
   script:
     - echo "Packaging project files..."
@@ -72,17 +111,20 @@ artifact_package:
       - dist/
     expire_in: 1 week
 
-integration_check:
+integration_checking:
   stage: integration_check
   script:
     - echo "Booting server and testing /api/health endpoint..."
     - node ci-test.js
   allow_failure: true
 
-deploy_notice:
+deploy_notifying:
   stage: deploy_notice
   script:
     - echo "Pipeline completed for MyDocVault"
     - echo "Branch -> $CI_COMMIT_REF_NAME"
     - echo "Commit -> $CI_COMMIT_SHORT_SHA"
-    - echo "This project is not auto-deployed."
+    - echo "Live URL -> ${DEPLOYMENT_URL:-https://mydocvault.onrender.com}"
+  environment:
+    name: production
+    url: ${DEPLOYMENT_URL:-https://mydocvault.onrender.com}
