@@ -1,3 +1,4 @@
+/* global jest, describe, it, expect */
 const { getPdfPageCount } = require('./pdf');
 
 jest.mock('pdf-parse', () => {

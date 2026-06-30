@@ -65,10 +65,54 @@ app.post('/api/ask', async (req, res) => {
     if (!anthropic) {
       const ollamaOk = await ollamaHealth();
       if (!ollamaOk) {
-        return res.status(503).json({
-          error:
-            'No AI backend is configured. Set ANTHROPIC_API_KEY, or start Ollama locally and install a model such as llama3.',
-        });
+        let docs = [];
+        try {
+          docs = await getDocs();
+        } catch (dbErr) {
+          console.warn('Failed to retrieve docs for mock responder:', dbErr);
+        }
+
+        const query = cleaned[cleaned.length - 1].content[0].text.toLowerCase();
+        let responseText = '';
+        const searchTerm = query.replace(/whats in|what's in|what is in|show|list/gi, '').trim();
+
+        if (searchTerm) {
+          const matches = docs.filter((d) => {
+            const content = JSON.stringify(d).toLowerCase();
+            return content.includes(searchTerm);
+          });
+
+          if (matches.length > 0) {
+            responseText = `### Local Search Results\n\nI found matching records for "${searchTerm}" in your offline vault:\n\n` + 
+              matches.map((d) => {
+                const ex = d.extracted || {};
+                return `📂 **${d.name}** (${ex.document_type || 'Unknown'})\n` +
+                       `- **Holder Name**: ${ex.holder_name || 'N/A'}\n` +
+                       `- **Document Number**: ${ex.document_number || 'N/A'}\n` +
+                       `- **Issue Date**: ${ex.issue_date || 'N/A'}\n` +
+                       `- **Expiry Date**: ${ex.expiry_date || 'N/A'}\n` +
+                       `- **Summary**: ${ex.summary || 'No summary available.'}`;
+              }).join('\n\n');
+          } else {
+            responseText = `### Local Search Results\n\nI couldn't find any documents containing "${searchTerm}" in your vault.\n\n` +
+              `Current vault contents (${docs.length} file(s)):\n` +
+              docs.map(d => `- **${d.name}** (${d.extracted?.document_type || 'Unknown'})`).join('\n');
+          }
+        } else {
+          if (docs.length > 0) {
+            responseText = `### Document Vault Overview\n\nYou currently have **${docs.length}** document(s) in your offline vault:\n\n` +
+              docs.map((d) => {
+                const ex = d.extracted || {};
+                return `- **${d.name}** (${ex.document_type || 'Unknown'}): Holder: ${ex.holder_name || 'N/A'}`;
+              }).join('\n');
+          } else {
+            responseText = `### Vault Empty\n\nYour vault is currently empty. Please upload some documents first under the "Upload Docs" section. Once uploaded, I can query them here offline!`;
+          }
+        }
+
+        responseText += `\n\n---\n*⚠️ Note: No AI backend is configured (Anthropic/Ollama). Running in offline rule-based query fallback mode. Set ANTHROPIC_API_KEY or run Ollama to enable full conversational intelligence.*`;
+
+        return res.json({ content: [{ type: 'text', text: responseText }] });
       }
 
       const prompt = toOllamaPrompt(system || '', cleaned);
