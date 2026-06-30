@@ -10,12 +10,14 @@ stages:
   - commit_check
   - syntax_check
   - security_audit
-  - unit_test
+  - test
+  - coverage
   - build
   - dependency_check
   - artifact_package
   - integration_check
   - deploy_notice
+
 
 install_dependencies:
   stage: install
@@ -71,11 +73,22 @@ security_auditing:
   allow_failure: true
 
 unit_testing:
-  stage: unit_test
+  stage: test
   script:
-    - echo "Running unit tests..."
-    - npm test || echo "No real test suite configured yet - informational only"
-  allow_failure: true
+    - echo "Running Jest unit tests..."
+    - npm run test:coverage
+  artifacts:
+    paths:
+      - coverage/
+    expire_in: 1 week
+
+coverage_reporting:
+  stage: coverage
+  script:
+    - echo "Reporting coverage results..."
+    - npm run test:coverage
+  coverage: '/All files\s*\|\s*([\d\.]+)/'
+
 
 build_checking:
   stage: build
