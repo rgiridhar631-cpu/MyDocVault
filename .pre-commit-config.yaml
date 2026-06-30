@@ -23,3 +23,19 @@ repos:
     rev: v8.18.2
     hooks:
       - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: type-check
+        name: TypeScript Compiler Check
+        entry: npm run type-check
+        language: system
+        files: \.(js)$
+        pass_filenames: false
+
+      - id: knip
+        name: Knip Dead Code Check
+        entry: npm run knip
+        language: system
+        files: \.(js)$
+        pass_filenames: false
