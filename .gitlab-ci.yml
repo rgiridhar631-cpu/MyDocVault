@@ -18,7 +18,6 @@ stages:
   - integration_check
   - deploy_notice
 
-
 install_dependencies:
   stage: install
   script:
@@ -89,7 +88,6 @@ coverage_reporting:
     - echo "Reporting coverage results..."
     - npm run test:coverage
   coverage: '/All files\s*\|\s*([\d\.]+)/'
-
 
 build_checking:
   stage: build
