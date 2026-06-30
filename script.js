@@ -12,6 +12,7 @@ const state = {
 };
 
 const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 
 const SYSTEM_PROMPT = `You are MyDocVault — an offline, privacy-first document assistant.
 CORE RULES:
@@ -84,6 +85,14 @@ function handleFiles(files) {
     const id = `doc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const item = createQueueItem(id, file.name);
     queueList.appendChild(item);
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setProgress(id, 100, 'error');
+      document.getElementById(`qs-${id}`).textContent = 'Error: file is over 20 MB';
+      document.getElementById(`qs-${id}`).className = 'queue-status error';
+      return;
+    }
+
     readAndProcess(file, id, item);
   });
 }
@@ -104,7 +113,7 @@ function readAndProcess(file, id, item) {
   const reader = new FileReader();
   reader.onload = async (e) => {
     const base64 = e.target.result.split(',')[1];
-    const mimeType = file.type || 'application/octet-stream';
+    const mimeType = inferMimeType(file);
     setProgress(id, 30, 'Extracting…');
 
     try {
@@ -122,7 +131,7 @@ function readAndProcess(file, id, item) {
       setProgress(id, 100, 'error');
       document.getElementById(`qs-${id}`).textContent = `Error: ${err.message}`;
       document.getElementById(`qs-${id}`).className = 'queue-status error';
-      console.error('Extraction failed:', err);
+      console.error('Upload failed:', err);
     }
   };
   reader.readAsDataURL(file);
@@ -233,7 +242,7 @@ async function extractImageWithOllama(base64, filename) {
 }
 
 async function saveDocument(doc) {
-  await fetch(`${API_BASE}/api/docs`, {
+  const res = await fetch(`${API_BASE}/api/docs`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -244,6 +253,17 @@ async function saveDocument(doc) {
       extracted: doc.extracted,
     }),
   });
+
+  if (!res.ok) {
+    let message = `Save failed (${res.status})`;
+    try {
+      const error = await res.json();
+      message = error.error || message;
+    } catch {
+      // Keep the generic HTTP status message when the response is not JSON.
+    }
+    throw new Error(message);
+  }
 }
 
 async function loadSavedDocuments() {
@@ -290,6 +310,18 @@ function guessDocumentType(filename, text = '') {
   if (source.includes('licence') || source.includes('license')) return 'Driving Licence';
   if (source.includes('birth')) return 'Birth Certificate';
   return 'Uploaded Document';
+}
+
+function inferMimeType(file) {
+  const type = (file.type || '').toLowerCase();
+  if (type === 'application/pdf' || type.startsWith('image/')) return type;
+
+  const name = (file.name || '').toLowerCase();
+  if (name.endsWith('.pdf')) return 'application/pdf';
+  if (name.endsWith('.png')) return 'image/png';
+  if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'image/jpeg';
+
+  return type || 'application/octet-stream';
 }
 
 // ── VAULT RENDERING ───────────────────────────────────────────
