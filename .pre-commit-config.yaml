@@ -1,31 +1,25 @@
 # .pre-commit-config.yaml
 repos:
-  - repo: local
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
     hooks:
-      - id: formatting-check
-        name: Prettier Formatting Check
-        entry: npm run format:check
-        language: system
+      - id: prettier
         files: \.(js|json|css|md|html)$
-        pass_filenames: false
 
-      - id: lint-check
-        name: ESLint Check
-        entry: npm run lint
-        language: system
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.56.0
+    hooks:
+      - id: eslint
         files: \.(js|json)$
-        pass_filenames: false
 
-      - id: type-check
-        name: TypeScript Type Check
-        entry: npm run type-check
-        language: system
-        files: \.(js)$
-        pass_filenames: false
+  - repo: https://github.com/pre-commit/mirrors-typescript
+    rev: v5.0.0
+    hooks:
+      - id: tsc
+        files: \.(js|ts)$
+        args: [--noEmit]
 
-      - id: secret-scan
-        name: Credential Leak Scan
-        entry: node secret-scan.js
-        language: system
-        files: \.(js|json|env|md|yml|yaml|html)$
-        pass_filenames: false
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
+    hooks:
+      - id: gitleaks

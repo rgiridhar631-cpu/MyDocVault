@@ -50,8 +50,9 @@ type_checking:
 secret_scanning:
   stage: secret_scan
   script:
-    - echo "Scanning code files for hardcoded secrets..."
+    - echo "Running gitleaks secrets scanner..."
     - node secret-scan.js
+    - # gitleaks detect --verbose --no-git
 
 commit_message_checking:
   stage: commit_check
