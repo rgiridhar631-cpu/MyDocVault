@@ -12,6 +12,11 @@ repos:
       - id: eslint
         files: \.(js|json)$
 
+  - repo: https://github.com/webpro/knip
+    rev: v5.22.0
+    hooks:
+      - id: knip
+
   - repo: https://github.com/pre-commit/mirrors-typescript
     rev: v5.0.0
     hooks:
@@ -29,13 +34,6 @@ repos:
       - id: type-check
         name: TypeScript Compiler Check
         entry: npm run type-check
-        language: system
-        files: \.(js)$
-        pass_filenames: false
-
-      - id: knip
-        name: Knip Dead Code Check
-        entry: npm run knip
         language: system
         files: \.(js)$
         pass_filenames: false
