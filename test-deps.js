@@ -5,11 +5,11 @@ const deps = [
   'tesseract.js',
   'node-fetch',
   'pdf-parse',
-  '@anthropic-ai/sdk'
+  '@anthropic-ai/sdk',
 ];
 
 let failed = false;
-deps.forEach(dep => {
+deps.forEach((dep) => {
   try {
     require(dep);
     console.log(`${dep}: OK`);

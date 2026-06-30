@@ -42,7 +42,10 @@ async function initDb() {
     );
   `);
 
-  const columns = db.prepare('PRAGMA table_info(documents)').all().map(col => col.name);
+  const columns = db
+    .prepare('PRAGMA table_info(documents)')
+    .all()
+    .map((col) => col.name);
   if (!columns.includes('extracted_text')) {
     db.exec('ALTER TABLE documents ADD COLUMN extracted_text TEXT DEFAULT ""');
   }
@@ -68,17 +71,17 @@ async function saveDoc({ id, name, size, mimeType, extracted = {} }) {
   stmt.run({
     id,
     name,
-    size:        size || 0,
-    mimeType:    mimeType || '',
-    docType:     extracted.document_type    || '',
-    holderName:  extracted.holder_name      || '',
-    docNumber:   extracted.document_number  || '',
-    issueDate:   extracted.issue_date       || '',
-    expiryDate:  extracted.expiry_date      || '',
-    authority:   extracted.issuing_authority || '',
-    summary:     extracted.summary          || '',
-    extractedText: extracted.extracted_text  || '',
-    confidence:  extracted.confidence       || 0,
+    size: size || 0,
+    mimeType: mimeType || '',
+    docType: extracted.document_type || '',
+    holderName: extracted.holder_name || '',
+    docNumber: extracted.document_number || '',
+    issueDate: extracted.issue_date || '',
+    expiryDate: extracted.expiry_date || '',
+    authority: extracted.issuing_authority || '',
+    summary: extracted.summary || '',
+    extractedText: extracted.extracted_text || '',
+    confidence: extracted.confidence || 0,
   });
 }
 
@@ -120,11 +123,15 @@ async function deleteDoc(id) {
 async function searchDocs(query) {
   ensureReady();
   const like = `%${query}%`;
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(
+      `
     SELECT * FROM documents
     WHERE holder_name LIKE ? OR doc_type LIKE ? OR name LIKE ?
     ORDER BY created_at DESC
-  `).all(like, like, like);
+  `
+    )
+    .all(like, like, like);
   return rows.map(rowToDoc);
 }
 
@@ -136,20 +143,20 @@ function ensureReady() {
 
 function rowToDoc(row) {
   return {
-    id:       row.id,
-    name:     row.name,
-    size:     row.size,
+    id: row.id,
+    name: row.name,
+    size: row.size,
     mimeType: row.mime_type,
     extracted: {
-      document_type:      row.doc_type,
-      holder_name:        row.holder_name,
-      document_number:    row.doc_number,
-      issue_date:         row.issue_date,
-      expiry_date:        row.expiry_date,
-      issuing_authority:  row.authority,
-      summary:            row.summary,
-      extracted_text:     row.extracted_text,
-      confidence:         row.confidence,
+      document_type: row.doc_type,
+      holder_name: row.holder_name,
+      document_number: row.doc_number,
+      issue_date: row.issue_date,
+      expiry_date: row.expiry_date,
+      issuing_authority: row.authority,
+      summary: row.summary,
+      extracted_text: row.extracted_text,
+      confidence: row.confidence,
     },
     createdAt: row.created_at,
   };

@@ -1,222 +1,318 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MyDocVault — Private Document Intelligence</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0d6efd" />
-</head>
-<body>
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="vault-logo">
-        <svg class="vault-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="4" y="8" width="40" height="32" rx="4" stroke="#2DD4BF" stroke-width="2.5"/>
-          <circle cx="24" cy="24" r="8" stroke="#2DD4BF" stroke-width="2.5"/>
-          <circle cx="24" cy="24" r="3" fill="#2DD4BF"/>
-          <line x1="24" y1="8" x2="24" y2="16" stroke="#2DD4BF" stroke-width="2.5"/>
-          <line x1="24" y1="32" x2="24" y2="40" stroke="#2DD4BF" stroke-width="2.5"/>
-          <line x1="4" y1="24" x2="16" y2="24" stroke="#2DD4BF" stroke-width="2.5"/>
-          <line x1="32" y1="24" x2="44" y2="24" stroke="#2DD4BF" stroke-width="2.5"/>
-          <line x1="36" y1="10" x2="40" y2="10" stroke="#F4C95D" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="36" y1="14" x2="40" y2="14" stroke="#F4C95D" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
-        <span class="logo-text">MyDocVault</span>
-      </div>
-      <div class="offline-badge">
-        <span class="dot"></span> OFFLINE · PRIVATE
-      </div>
-    </div>
-
-    <nav class="sidebar-nav">
-      <button class="nav-item active" data-tab="upload" onclick="switchTab('upload')">
-        <svg viewBox="0 0 20 20" fill="none"><path d="M10 3v10M6 7l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Upload Docs
-      </button>
-      <button class="nav-item" data-tab="vault" onclick="switchTab('vault')">
-        <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 7h6M7 10h4M7 13h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Document Vault
-      </button>
-      <button class="nav-item" data-tab="ask" onclick="switchTab('ask')">
-        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v4l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Ask AI
-      </button>
-      <button class="nav-item" data-tab="services" onclick="switchTab('services')">
-        <svg viewBox="0 0 20 20" fill="none"><path d="M9 3H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4" stroke="currentColor" stroke-width="1.5"/><path d="M15 3l2 2-7 7H8v-2l7-7z" stroke="currentColor" stroke-width="1.5"/></svg>
-        Gov Services
-      </button>
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="vault-stats">
-        <div class="stat"><span id="doc-count">0</span><label>Docs</label></div>
-        <div class="stat-divider"></div>
-        <div class="stat"><span id="doc-size">0 KB</span><label>Stored</label></div>
-      </div>
-      <p class="privacy-note">All data stays on your device. No cloud. No tracking.</p>
-    </div>
-  </aside>
-
-  <!-- MAIN CONTENT -->
-  <main class="main" id="main">
-
-    <!-- HEADER -->
-    <header class="topbar">
-      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-      <div class="breadcrumb" id="breadcrumb">Upload Documents</div>
-      <div class="model-badge">
-        <span class="dot teal"></span>
-        <span id="model-name">claude-sonnet-4-6</span>
-      </div>
-    </header>
-
-    <!-- TAB: UPLOAD -->
-    <section class="tab-panel active" id="tab-upload">
-      <div class="panel-header">
-        <h1>Upload Documents</h1>
-        <p>Add PDFs or images to your private vault for AI-powered analysis.</p>
-      </div>
-
-      <div class="upload-zone" id="upload-zone">
-        <div class="upload-icon">
-          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="8" y="16" width="48" height="40" rx="4" stroke="#2DD4BF" stroke-width="2"/>
-            <path d="M32 44V28M24 36l8-8 8 8" stroke="#2DD4BF" stroke-width="2" stroke-linecap="round"/>
-            <path d="M20 16v-4a4 4 0 014-4h16a4 4 0 014 4v4" stroke="#F4C95D" stroke-width="2"/>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyDocVault — Private Document Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Courier+Prime:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0d6efd" />
+  </head>
+  <body>
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="vault-logo">
+          <svg
+            class="vault-icon"
+            viewBox="0 0 48 48"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect x="4" y="8" width="40" height="32" rx="4" stroke="#2DD4BF" stroke-width="2.5" />
+            <circle cx="24" cy="24" r="8" stroke="#2DD4BF" stroke-width="2.5" />
+            <circle cx="24" cy="24" r="3" fill="#2DD4BF" />
+            <line x1="24" y1="8" x2="24" y2="16" stroke="#2DD4BF" stroke-width="2.5" />
+            <line x1="24" y1="32" x2="24" y2="40" stroke="#2DD4BF" stroke-width="2.5" />
+            <line x1="4" y1="24" x2="16" y2="24" stroke="#2DD4BF" stroke-width="2.5" />
+            <line x1="32" y1="24" x2="44" y2="24" stroke="#2DD4BF" stroke-width="2.5" />
+            <line
+              x1="36"
+              y1="10"
+              x2="40"
+              y2="10"
+              stroke="#F4C95D"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            />
+            <line
+              x1="36"
+              y1="14"
+              x2="40"
+              y2="14"
+              stroke="#F4C95D"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            />
           </svg>
+          <span class="logo-text">MyDocVault</span>
         </div>
-        <p class="upload-title">Drop files here or <label for="file-input" class="upload-link">browse</label></p>
-        <p class="upload-sub">PDF, PNG, JPG · Max 20 MB per file</p>
-        <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg" multiple hidden />
+        <div class="offline-badge"><span class="dot"></span> OFFLINE · PRIVATE</div>
       </div>
 
-      <div class="extract-options">
-        <h3>On Upload, AI Will:</h3>
-        <div class="option-grid">
-          <div class="option-card">
-            <span class="option-icon">🔍</span>
-            <strong>Extract Data</strong>
-            <p>Name, dates, doc numbers, issuing authority</p>
-          </div>
-          <div class="option-card">
-            <span class="option-icon">📝</span>
-            <strong>Plain Summary</strong>
-            <p>What the document is in simple language</p>
-          </div>
-          <div class="option-card">
-            <span class="option-icon">🔒</span>
-            <strong>Stay Private</strong>
-            <p>Processed locally via Ollama — never sent online</p>
-          </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="upload" onclick="switchTab('upload')">
+          <svg viewBox="0 0 20 20" fill="none">
+            <path
+              d="M10 3v10M6 7l4-4 4 4"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+            <path
+              d="M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+          Upload Docs
+        </button>
+        <button class="nav-item" data-tab="vault" onclick="switchTab('vault')">
+          <svg viewBox="0 0 20 20" fill="none">
+            <rect
+              x="3"
+              y="3"
+              width="14"
+              height="14"
+              rx="2"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+            <path
+              d="M7 7h6M7 10h4M7 13h5"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+          Document Vault
+        </button>
+        <button class="nav-item" data-tab="ask" onclick="switchTab('ask')">
+          <svg viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5" />
+            <path d="M10 6v4l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          Ask AI
+        </button>
+        <button class="nav-item" data-tab="services" onclick="switchTab('services')">
+          <svg viewBox="0 0 20 20" fill="none">
+            <path
+              d="M9 3H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+            <path d="M15 3l2 2-7 7H8v-2l7-7z" stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          Gov Services
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="vault-stats">
+          <div class="stat"><span id="doc-count">0</span><label>Docs</label></div>
+          <div class="stat-divider"></div>
+          <div class="stat"><span id="doc-size">0 KB</span><label>Stored</label></div>
         </div>
+        <p class="privacy-note">All data stays on your device. No cloud. No tracking.</p>
       </div>
+    </aside>
 
-      <!-- Upload Queue -->
-      <div class="upload-queue" id="upload-queue" style="display:none">
-        <h3>Processing Queue</h3>
-        <div id="queue-list"></div>
-      </div>
-    </section>
-
-    <!-- TAB: VAULT -->
-    <section class="tab-panel" id="tab-vault">
-      <div class="panel-header">
-        <h1>Document Vault</h1>
-        <p>All documents stored locally in this session.</p>
-      </div>
-      <div class="vault-grid" id="vault-grid">
-        <div class="empty-state">
-          <svg viewBox="0 0 64 64" fill="none"><rect x="12" y="8" width="40" height="48" rx="3" stroke="#2DD4BF" stroke-width="1.5"/><path d="M20 22h24M20 30h24M20 38h16" stroke="#2DD4BF" stroke-width="1.5" stroke-linecap="round"/></svg>
-          <p>No documents yet.<br/>Upload files to begin.</p>
+    <!-- MAIN CONTENT -->
+    <main class="main" id="main">
+      <!-- HEADER -->
+      <header class="topbar">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <div class="breadcrumb" id="breadcrumb">Upload Documents</div>
+        <div class="model-badge">
+          <span class="dot teal"></span>
+          <span id="model-name">claude-sonnet-4-6</span>
         </div>
-      </div>
-    </section>
+      </header>
 
-    <!-- TAB: ASK AI -->
-    <section class="tab-panel" id="tab-ask">
-      <div class="panel-header">
-        <h1>Ask AI</h1>
-        <p>Ask anything about your uploaded documents. The AI only answers from what's in your vault.</p>
-      </div>
+      <!-- TAB: UPLOAD -->
+      <section class="tab-panel active" id="tab-upload">
+        <div class="panel-header">
+          <h1>Upload Documents</h1>
+          <p>Add PDFs or images to your private vault for AI-powered analysis.</p>
+        </div>
 
-      <div class="chat-container">
-        <div class="chat-messages" id="chat-messages">
-          <div class="chat-message assistant">
-            <div class="msg-avatar">V</div>
-            <div class="msg-body">
-              <p>Hello! I'm your MyDocVault assistant. Upload documents first, then ask me to:</p>
-              <ul>
-                <li>Extract structured data from any document</li>
-                <li>Explain what a document is in plain language</li>
-                <li>Check which government service documents you have or are missing</li>
-              </ul>
-              <p>Everything stays on your device — I never send your data anywhere.</p>
+        <div class="upload-zone" id="upload-zone">
+          <div class="upload-icon">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="8" y="16" width="48" height="40" rx="4" stroke="#2DD4BF" stroke-width="2" />
+              <path
+                d="M32 44V28M24 36l8-8 8 8"
+                stroke="#2DD4BF"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+              <path d="M20 16v-4a4 4 0 014-4h16a4 4 0 014 4v4" stroke="#F4C95D" stroke-width="2" />
+            </svg>
+          </div>
+          <p class="upload-title">
+            Drop files here or <label for="file-input" class="upload-link">browse</label>
+          </p>
+          <p class="upload-sub">PDF, PNG, JPG · Max 20 MB per file</p>
+          <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg" multiple hidden />
+        </div>
+
+        <div class="extract-options">
+          <h3>On Upload, AI Will:</h3>
+          <div class="option-grid">
+            <div class="option-card">
+              <span class="option-icon">🔍</span>
+              <strong>Extract Data</strong>
+              <p>Name, dates, doc numbers, issuing authority</p>
+            </div>
+            <div class="option-card">
+              <span class="option-icon">📝</span>
+              <strong>Plain Summary</strong>
+              <p>What the document is in simple language</p>
+            </div>
+            <div class="option-card">
+              <span class="option-icon">🔒</span>
+              <strong>Stay Private</strong>
+              <p>Processed locally via Ollama — never sent online</p>
             </div>
           </div>
         </div>
 
-        <div class="chat-input-bar">
-          <textarea id="chat-input" placeholder="Ask about your documents…" rows="1" onkeydown="handleChatKey(event)"></textarea>
-          <button class="send-btn" id="send-btn" onclick="sendMessage()">
-            <svg viewBox="0 0 20 20" fill="none"><path d="M3 10l14-7-7 14V10H3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-          </button>
+        <!-- Upload Queue -->
+        <div class="upload-queue" id="upload-queue" style="display: none">
+          <h3>Processing Queue</h3>
+          <div id="queue-list"></div>
         </div>
+      </section>
+
+      <!-- TAB: VAULT -->
+      <section class="tab-panel" id="tab-vault">
+        <div class="panel-header">
+          <h1>Document Vault</h1>
+          <p>All documents stored locally in this session.</p>
+        </div>
+        <div class="vault-grid" id="vault-grid">
+          <div class="empty-state">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect
+                x="12"
+                y="8"
+                width="40"
+                height="48"
+                rx="3"
+                stroke="#2DD4BF"
+                stroke-width="1.5"
+              />
+              <path
+                d="M20 22h24M20 30h24M20 38h16"
+                stroke="#2DD4BF"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+            </svg>
+            <p>No documents yet.<br />Upload files to begin.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: ASK AI -->
+      <section class="tab-panel" id="tab-ask">
+        <div class="panel-header">
+          <h1>Ask AI</h1>
+          <p>
+            Ask anything about your uploaded documents. The AI only answers from what's in your
+            vault.
+          </p>
+        </div>
+
+        <div class="chat-container">
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-message assistant">
+              <div class="msg-avatar">V</div>
+              <div class="msg-body">
+                <p>Hello! I'm your MyDocVault assistant. Upload documents first, then ask me to:</p>
+                <ul>
+                  <li>Extract structured data from any document</li>
+                  <li>Explain what a document is in plain language</li>
+                  <li>Check which government service documents you have or are missing</li>
+                </ul>
+                <p>Everything stays on your device — I never send your data anywhere.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-input-bar">
+            <textarea
+              id="chat-input"
+              placeholder="Ask about your documents…"
+              rows="1"
+              onkeydown="handleChatKey(event)"
+            ></textarea>
+            <button class="send-btn" id="send-btn" onclick="sendMessage()">
+              <svg viewBox="0 0 20 20" fill="none">
+                <path
+                  d="M3 10l14-7-7 14V10H3z"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: GOV SERVICES -->
+      <section class="tab-panel" id="tab-services">
+        <div class="panel-header">
+          <h1>Government Services</h1>
+          <p>Check which documents you have and what's still missing for common services.</p>
+        </div>
+
+        <div class="services-grid">
+          <div class="service-card" onclick="checkService('passport')">
+            <div class="service-icon">🛂</div>
+            <strong>Passport Application</strong>
+            <p>Birth cert, photo ID, address proof</p>
+            <span class="check-btn">Check Docs →</span>
+          </div>
+          <div class="service-card" onclick="checkService('driving')">
+            <div class="service-icon">🚗</div>
+            <strong>Driving Licence</strong>
+            <p>Address proof, age proof, medical cert</p>
+            <span class="check-btn">Check Docs →</span>
+          </div>
+          <div class="service-card" onclick="checkService('bank')">
+            <div class="service-icon">🏦</div>
+            <strong>Bank Account KYC</strong>
+            <p>Photo ID, address proof, PAN/tax number</p>
+            <span class="check-btn">Check Docs →</span>
+          </div>
+          <div class="service-card" onclick="checkService('visa')">
+            <div class="service-icon">✈️</div>
+            <strong>Visa Application</strong>
+            <p>Passport, bank statement, employment proof</p>
+            <span class="check-btn">Check Docs →</span>
+          </div>
+        </div>
+
+        <div class="service-result" id="service-result" style="display: none"></div>
+      </section>
+    </main>
+
+    <!-- DOC DETAIL MODAL -->
+    <div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <div id="modal-content"></div>
       </div>
-    </section>
-
-    <!-- TAB: GOV SERVICES -->
-    <section class="tab-panel" id="tab-services">
-      <div class="panel-header">
-        <h1>Government Services</h1>
-        <p>Check which documents you have and what's still missing for common services.</p>
-      </div>
-
-      <div class="services-grid">
-        <div class="service-card" onclick="checkService('passport')">
-          <div class="service-icon">🛂</div>
-          <strong>Passport Application</strong>
-          <p>Birth cert, photo ID, address proof</p>
-          <span class="check-btn">Check Docs →</span>
-        </div>
-        <div class="service-card" onclick="checkService('driving')">
-          <div class="service-icon">🚗</div>
-          <strong>Driving Licence</strong>
-          <p>Address proof, age proof, medical cert</p>
-          <span class="check-btn">Check Docs →</span>
-        </div>
-        <div class="service-card" onclick="checkService('bank')">
-          <div class="service-icon">🏦</div>
-          <strong>Bank Account KYC</strong>
-          <p>Photo ID, address proof, PAN/tax number</p>
-          <span class="check-btn">Check Docs →</span>
-        </div>
-        <div class="service-card" onclick="checkService('visa')">
-          <div class="service-icon">✈️</div>
-          <strong>Visa Application</strong>
-          <p>Passport, bank statement, employment proof</p>
-          <span class="check-btn">Check Docs →</span>
-        </div>
-      </div>
-
-      <div class="service-result" id="service-result" style="display:none"></div>
-    </section>
-
-  </main>
-
-  <!-- DOC DETAIL MODAL -->
-  <div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
-    <div class="modal" onclick="event.stopPropagation()">
-      <button class="modal-close" onclick="closeModal()">✕</button>
-      <div id="modal-content"></div>
     </div>
-  </div>
 
-  <script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>

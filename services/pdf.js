@@ -11,8 +11,8 @@
  */
 async function parsePdf(base64) {
   const pdfParse = require('pdf-parse');
-  const buffer   = Buffer.from(base64, 'base64');
-  const result   = await pdfParse(buffer);
+  const buffer = Buffer.from(base64, 'base64');
+  const result = await pdfParse(buffer);
   return result.text.trim();
 }
 
@@ -23,8 +23,8 @@ async function parsePdf(base64) {
  */
 async function getPdfPageCount(base64) {
   const pdfParse = require('pdf-parse');
-  const buffer   = Buffer.from(base64, 'base64');
-  const result   = await pdfParse(buffer, { max: 1 });
+  const buffer = Buffer.from(base64, 'base64');
+  const result = await pdfParse(buffer, { max: 1 });
   return result.numpages;
 }
 
@@ -36,9 +36,9 @@ async function getPdfPageCount(base64) {
  */
 async function parsePdfPages(base64, maxPages = 0) {
   const pdfParse = require('pdf-parse');
-  const buffer   = Buffer.from(base64, 'base64');
-  const options  = maxPages > 0 ? { max: maxPages } : {};
-  const result   = await pdfParse(buffer, options);
+  const buffer = Buffer.from(base64, 'base64');
+  const options = maxPages > 0 ? { max: maxPages } : {};
+  const result = await pdfParse(buffer, options);
   return result.text.trim();
 }
 

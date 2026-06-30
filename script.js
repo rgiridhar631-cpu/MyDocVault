@@ -6,8 +6,8 @@
 
 // ── STATE ─────────────────────────────────────────────────────
 const state = {
-  documents: [],    // { id, name, size, type, base64, extracted, summary }
-  chatHistory: [],  // { role, content }[]
+  documents: [], // { id, name, size, type, base64, extracted, summary }
+  chatHistory: [], // { role, content }[]
   activeTab: 'upload',
 };
 
@@ -42,11 +42,16 @@ Leave unknown fields as empty strings. Confidence ∈ [0.0, 1.0]. Never invent v
 // ── TAB NAVIGATION ────────────────────────────────────────────
 function switchTab(tab) {
   state.activeTab = tab;
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach((n) => n.classList.remove('active'));
   document.getElementById(`tab-${tab}`).classList.add('active');
   document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-  const labels = { upload: 'Upload Documents', vault: 'Document Vault', ask: 'Ask AI', services: 'Government Services' };
+  const labels = {
+    upload: 'Upload Documents',
+    vault: 'Document Vault',
+    ask: 'Ask AI',
+    services: 'Government Services',
+  };
   document.getElementById('breadcrumb').textContent = labels[tab];
 }
 
@@ -56,7 +61,7 @@ function toggleSidebar() {
 
 // ── FILE UPLOAD ───────────────────────────────────────────────
 const uploadZone = document.getElementById('upload-zone');
-const fileInput  = document.getElementById('file-input');
+const fileInput = document.getElementById('file-input');
 
 uploadZone.addEventListener('click', () => fileInput.click());
 
@@ -81,7 +86,7 @@ function handleFiles(files) {
   const queueList = document.getElementById('queue-list');
   queue.style.display = 'block';
 
-  files.forEach(file => {
+  files.forEach((file) => {
     const id = `doc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const item = createQueueItem(id, file.name);
     queueList.appendChild(item);
@@ -168,7 +173,7 @@ async function callApi(messages, extraSystemNote = '') {
 
 async function callApiExtract(base64, mimeType, filename) {
   const isImage = mimeType.startsWith('image/');
-  const isPdf   = mimeType === 'application/pdf';
+  const isPdf = mimeType === 'application/pdf';
 
   if (!isImage && !isPdf) {
     throw new Error('Unsupported file type');
@@ -207,10 +212,12 @@ async function callApiExtract(base64, mimeType, filename) {
   if (!text) return fallback;
 
   try {
-    const raw = await callApi([{
-      role: 'user',
-      content: `This file is named "${filename}". Extract structured data from this local OCR/PDF text and return ONLY valid JSON in the required schema.\n\n${text.slice(0, 12000)}`,
-    }]);
+    const raw = await callApi([
+      {
+        role: 'user',
+        content: `This file is named "${filename}". Extract structured data from this local OCR/PDF text and return ONLY valid JSON in the required schema.\n\n${text.slice(0, 12000)}`,
+      },
+    ]);
     const match = raw.match(/\{[\s\S]*\}/);
     if (!match) return fallback;
     return { ...fallback, ...JSON.parse(match[0]), extracted_text: text };
@@ -335,21 +342,23 @@ function renderVault() {
     return;
   }
 
-  grid.innerHTML = state.documents.map(doc => {
-    const ex = doc.extracted || {};
-    const conf = ex.confidence ? Math.round(ex.confidence * 100) : 0;
-    return `<div class="doc-card" onclick="openDocModal('${doc.id}')">
+  grid.innerHTML = state.documents
+    .map((doc) => {
+      const ex = doc.extracted || {};
+      const conf = ex.confidence ? Math.round(ex.confidence * 100) : 0;
+      return `<div class="doc-card" onclick="openDocModal('${doc.id}')">
       <span class="doc-type-badge">${escHtml(ex.document_type || 'Unknown')}</span>
       <h4>${escHtml(doc.name)}</h4>
       <div class="doc-meta">
-        ${ex.holder_name    ? `<div>👤 ${escHtml(ex.holder_name)}</div>` : ''}
-        ${ex.document_number? `<div>🔢 ${escHtml(ex.document_number)}</div>` : ''}
-        ${ex.issue_date     ? `<div>📅 ${escHtml(ex.issue_date)}</div>` : ''}
-        ${ex.expiry_date    ? `<div>⏳ ${escHtml(ex.expiry_date)}</div>` : ''}
+        ${ex.holder_name ? `<div>👤 ${escHtml(ex.holder_name)}</div>` : ''}
+        ${ex.document_number ? `<div>🔢 ${escHtml(ex.document_number)}</div>` : ''}
+        ${ex.issue_date ? `<div>📅 ${escHtml(ex.issue_date)}</div>` : ''}
+        ${ex.expiry_date ? `<div>⏳ ${escHtml(ex.expiry_date)}</div>` : ''}
       </div>
       <div class="confidence-bar"><div class="confidence-fill" style="width:${conf}%"></div></div>
     </div>`;
-  }).join('');
+    })
+    .join('');
 }
 
 function updateVaultStats() {
@@ -360,7 +369,7 @@ function updateVaultStats() {
 
 // ── DOC MODAL ─────────────────────────────────────────────────
 function openDocModal(id) {
-  const doc = state.documents.find(d => d.id === id);
+  const doc = state.documents.find((d) => d.id === id);
   if (!doc) return;
   const ex = doc.extracted || {};
   const json = JSON.stringify(ex, null, 2);
@@ -402,23 +411,30 @@ function handleChatKey(e) {
 
 async function sendMessage() {
   const input = document.getElementById('chat-input');
-  const text  = input.value.trim();
+  const text = input.value.trim();
   if (!text) return;
 
   input.value = '';
   appendMsg('user', text);
 
   if (!state.documents.length) {
-    appendMsg('assistant', 'Your vault is empty. Upload a PDF or image first, then I can answer from that document.');
+    appendMsg(
+      'assistant',
+      'Your vault is empty. Upload a PDF or image first, then I can answer from that document.'
+    );
     return;
   }
 
   // Build doc context
-  const docContext = state.documents.map(d => {
-    const ex = d.extracted || {};
-    const extractedText = ex.extracted_text ? `\nReadable text:\n${ex.extracted_text.slice(0, 12000)}` : '';
-    return `Document: ${d.name}\nExtracted: ${JSON.stringify(ex)}${extractedText}`;
-  }).join('\n\n---\n\n');
+  const docContext = state.documents
+    .map((d) => {
+      const ex = d.extracted || {};
+      const extractedText = ex.extracted_text
+        ? `\nReadable text:\n${ex.extracted_text.slice(0, 12000)}`
+        : '';
+      return `Document: ${d.name}\nExtracted: ${JSON.stringify(ex)}${extractedText}`;
+    })
+    .join('\n\n---\n\n');
 
   const systemNote = docContext
     ? `VAULT CONTENTS (use ONLY these for answers):\n\n${docContext}`
@@ -428,12 +444,18 @@ async function sendMessage() {
   const userContent = [];
 
   // Attach doc files
-  state.documents.forEach(doc => {
+  state.documents.forEach((doc) => {
     if (!doc.base64) return;
     if (doc.mimeType.startsWith('image/')) {
-      userContent.push({ type: 'image', source: { type: 'base64', media_type: doc.mimeType, data: doc.base64 } });
+      userContent.push({
+        type: 'image',
+        source: { type: 'base64', media_type: doc.mimeType, data: doc.base64 },
+      });
     } else if (doc.mimeType === 'application/pdf') {
-      userContent.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: doc.base64 } });
+      userContent.push({
+        type: 'document',
+        source: { type: 'base64', media_type: 'application/pdf', data: doc.base64 },
+      });
     }
   });
 
@@ -454,7 +476,10 @@ async function sendMessage() {
     state.chatHistory.push({ role: 'assistant', content: reply });
   } catch (err) {
     removeTyping(typingId);
-    appendMsg('assistant', `Warning: ${err.message}. Start the server with npm start and open http://localhost:3000.`);
+    appendMsg(
+      'assistant',
+      `Warning: ${err.message}. Start the server with npm start and open http://localhost:3000.`
+    );
   }
 
   document.getElementById('send-btn').disabled = false;
@@ -462,7 +487,7 @@ async function sendMessage() {
 
 function appendMsg(role, text) {
   const msgs = document.getElementById('chat-messages');
-  const div  = document.createElement('div');
+  const div = document.createElement('div');
   div.className = `chat-message ${role}`;
   const avatar = role === 'assistant' ? 'V' : 'U';
   div.innerHTML = `
@@ -476,7 +501,7 @@ function appendMsg(role, text) {
 function appendTyping() {
   const id = 'typing-' + Date.now();
   const msgs = document.getElementById('chat-messages');
-  const div  = document.createElement('div');
+  const div = document.createElement('div');
   div.className = 'chat-message assistant';
   div.id = id;
   div.innerHTML = `
@@ -497,7 +522,12 @@ function removeTyping(id) {
 const SERVICE_REQUIREMENTS = {
   passport: {
     name: 'Passport Application',
-    required: ['Birth Certificate', 'Photo ID (Aadhaar/National ID)', 'Address Proof', 'Passport Photo'],
+    required: [
+      'Birth Certificate',
+      'Photo ID (Aadhaar/National ID)',
+      'Address Proof',
+      'Passport Photo',
+    ],
   },
   driving: {
     name: 'Driving Licence',
@@ -521,10 +551,12 @@ async function checkService(serviceKey) {
   resultDiv.style.display = 'block';
   resultDiv.innerHTML = `<h3>${svc.name}</h3><div class="spinner"></div> Checking your vault…`;
 
-  const vaultSummary = state.documents.map(d => {
-    const ex = d.extracted || {};
-    return `File: ${d.name} | Type: ${ex.document_type || 'unknown'} | Holder: ${ex.holder_name || '-'} | Expiry: ${ex.expiry_date || '-'}`;
-  }).join('\n');
+  const vaultSummary = state.documents
+    .map((d) => {
+      const ex = d.extracted || {};
+      return `File: ${d.name} | Type: ${ex.document_type || 'unknown'} | Holder: ${ex.holder_name || '-'} | Expiry: ${ex.expiry_date || '-'}`;
+    })
+    .join('\n');
 
   const prompt = `Government service: ${svc.name}
 Required documents: ${svc.required.join(', ')}
@@ -550,7 +582,11 @@ Check which required documents are satisfied by the vault contents and which are
 // ── UTILS ─────────────────────────────────────────────────────
 function escHtml(s) {
   if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function formatBytes(b) {
@@ -563,7 +599,10 @@ function formatMarkdown(text) {
   // Very light markdown: bold, code blocks, bullets, line breaks
   return escHtml(text)
     .replace(/```([\s\S]*?)```/g, '<pre>$1</pre>')
-    .replace(/`([^`]+)`/g, '<code style="background:var(--bg-deep);padding:2px 5px;border-radius:3px;font-family:var(--font-mono);color:var(--teal)">$1</code>')
+    .replace(
+      /`([^`]+)`/g,
+      '<code style="background:var(--bg-deep);padding:2px 5px;border-radius:3px;font-family:var(--font-mono);color:var(--teal)">$1</code>'
+    )
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/^• (.+)$/gm, '<li>$1</li>')
     .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
@@ -575,8 +614,9 @@ loadSavedDocuments();
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
-      .catch(err => console.error('[PWA] Service Worker registration failed:', err));
+    navigator.serviceWorker
+      .register('./sw.js')
+      .then((reg) => console.log('[PWA] Service Worker registered:', reg.scope))
+      .catch((err) => console.error('[PWA] Service Worker registration failed:', err));
   });
 }

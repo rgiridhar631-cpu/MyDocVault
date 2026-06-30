@@ -31,7 +31,7 @@ function ollamaHeaders() {
  */
 async function ollamaHealth() {
   try {
-    const res   = await fetch(`${OLLAMA_BASE}/api/tags`, {
+    const res = await fetch(`${OLLAMA_BASE}/api/tags`, {
       headers: ollamaHeaders(),
       timeout: 2000,
     });
@@ -49,7 +49,7 @@ async function ollamaHealth() {
  */
 async function askOllama(prompt, model = DEFAULT_MODEL) {
   const res = await fetch(`${OLLAMA_BASE}/api/generate`, {
-    method:  'POST',
+    method: 'POST',
     headers: ollamaHeaders(),
     timeout: OLLAMA_TIMEOUT_MS,
     body: JSON.stringify({
@@ -57,7 +57,7 @@ async function askOllama(prompt, model = DEFAULT_MODEL) {
       prompt,
       stream: false,
       options: {
-        temperature: 0.1,  // Low temp for factual doc extraction
+        temperature: 0.1, // Low temp for factual doc extraction
         num_predict: 2048,
       },
     }),
@@ -74,7 +74,7 @@ async function askOllama(prompt, model = DEFAULT_MODEL) {
 
 async function askOllamaVision(prompt, base64Image, model = DEFAULT_VISION_MODEL) {
   const res = await fetch(`${OLLAMA_BASE}/api/generate`, {
-    method:  'POST',
+    method: 'POST',
     headers: ollamaHeaders(),
     timeout: OLLAMA_TIMEOUT_MS,
     body: JSON.stringify({
@@ -104,11 +104,11 @@ async function askOllamaVision(prompt, base64Image, model = DEFAULT_VISION_MODEL
  */
 async function listOllamaModels() {
   try {
-    const res   = await fetch(`${OLLAMA_BASE}/api/tags`, {
+    const res = await fetch(`${OLLAMA_BASE}/api/tags`, {
       headers: ollamaHeaders(),
     });
-    const data  = await res.json();
-    return (data.models || []).map(m => m.name);
+    const data = await res.json();
+    return (data.models || []).map((m) => m.name);
   } catch {
     return [];
   }

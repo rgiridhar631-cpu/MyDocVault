@@ -8,18 +8,18 @@
 
 require('dotenv').config();
 
-const express  = require('express');
-const cors     = require('cors');
-const path     = require('path');
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
 const { Anthropic } = require('@anthropic-ai/sdk');
 
 // ── Services
-const { extractWithOcr }    = require('./services/ocr');
-const { parsePdf }          = require('./services/pdf');
+const { extractWithOcr } = require('./services/ocr');
+const { parsePdf } = require('./services/pdf');
 const { askOllama, askOllamaVision, ollamaHealth } = require('./services/ollama');
 const { initDb, saveDoc, getDocs, deleteDoc } = require('./services/db');
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3000;
 const JSON_LIMIT = '35mb';
 
@@ -56,11 +56,9 @@ app.post('/api/ask', async (req, res) => {
   }
 
   // Sanitize: ensure each message has role + content
-  const cleaned = messages.map(m => ({
+  const cleaned = messages.map((m) => ({
     role: m.role,
-    content: Array.isArray(m.content)
-      ? m.content
-      : [{ type: 'text', text: String(m.content) }],
+    content: Array.isArray(m.content) ? m.content : [{ type: 'text', text: String(m.content) }],
   }));
 
   try {
@@ -68,7 +66,8 @@ app.post('/api/ask', async (req, res) => {
       const ollamaOk = await ollamaHealth();
       if (!ollamaOk) {
         return res.status(503).json({
-          error: 'No AI backend is configured. Set ANTHROPIC_API_KEY, or start Ollama locally and install a model such as llama3.',
+          error:
+            'No AI backend is configured. Set ANTHROPIC_API_KEY, or start Ollama locally and install a model such as llama3.',
         });
       }
 
@@ -81,10 +80,10 @@ app.post('/api/ask', async (req, res) => {
     }
 
     const response = await anthropic.messages.create({
-      model:      MODEL,
+      model: MODEL,
       max_tokens: 2048,
-      system:     system || '',
-      messages:   cleaned,
+      system: system || '',
+      messages: cleaned,
     });
 
     res.json(response);
@@ -102,7 +101,7 @@ function toOllamaPrompt(system, messages) {
   for (const message of messages) {
     const role = message.role === 'assistant' ? 'Assistant' : 'User';
     const text = message.content
-      .map(part => {
+      .map((part) => {
         if (typeof part === 'string') return part;
         if (part.type === 'text') return part.text || '';
         return `[${part.type || 'attachment'} omitted: local Ollama text prompt only]`;

@@ -1,0 +1,31 @@
+# .pre-commit-config.yaml
+repos:
+  - repo: local
+    hooks:
+      - id: formatting-check
+        name: Prettier Formatting Check
+        entry: npm run format:check
+        language: system
+        files: \.(js|json|css|md|html)$
+        pass_filenames: false
+
+      - id: lint-check
+        name: ESLint Check
+        entry: npm run lint
+        language: system
+        files: \.(js|json)$
+        pass_filenames: false
+
+      - id: type-check
+        name: TypeScript Type Check
+        entry: npm run type-check
+        language: system
+        files: \.(js)$
+        pass_filenames: false
+
+      - id: secret-scan
+        name: Credential Leak Scan
+        entry: node secret-scan.js
+        language: system
+        files: \.(js|json|env|md|yml|yaml|html)$
+        pass_filenames: false

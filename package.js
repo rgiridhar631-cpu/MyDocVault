@@ -15,10 +15,10 @@ const filesToCopy = [
   'manifest.json',
   'sw.js',
   'icon-192.png',
-  'icon-512.png'
+  'icon-512.png',
 ];
 
-filesToCopy.forEach(file => {
+filesToCopy.forEach((file) => {
   if (fs.existsSync(file)) {
     fs.copyFileSync(file, path.join(distDir, file));
     console.log(`Copied ${file} to dist/`);
@@ -32,7 +32,7 @@ if (fs.existsSync(servicesDir)) {
   if (!fs.existsSync(distServicesDir)) {
     fs.mkdirSync(distServicesDir);
   }
-  fs.readdirSync(servicesDir).forEach(file => {
+  fs.readdirSync(servicesDir).forEach((file) => {
     fs.copyFileSync(path.join(servicesDir, file), path.join(distServicesDir, file));
     console.log(`Copied services/${file} to dist/services/`);
   });
