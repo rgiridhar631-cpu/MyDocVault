@@ -71,6 +71,46 @@ Each document can be stored with fields like:
 
 GovVault AI does not depend on external APIs. All processing, inference, and storage happen locally to protect privacy and to keep the app usable even in air-gapped environments.
 
+## Installation and Setup
+
+### Prerequisites
+- Node.js >= 18.0.0
+- npm
+
+### Local Run Instructions
+1. Clone the repository.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Initialize the database:
+   ```bash
+   npm run setup
+   ```
+4. Start the application:
+   ```bash
+   npm start
+   ```
+5. Open your browser and navigate to `http://localhost:3000`.
+
+### PWA Support (Offline Mode)
+The application includes full Progressive Web App (PWA) support. Once loaded in your browser, it installs a service worker that caches all assets. This allows the core UI and features to be fully accessible offline, adhering to the air-gapped/privacy design principles.
+
+## Deployment Guide
+
+### One-Click Deploy to Render
+You can deploy this web application with a persistent SQLite database using the included `render.yaml` configuration:
+1. Push this repository to your GitHub account.
+2. Sign in to [Render](https://render.com).
+3. Click **New** -> **Blueprint Route** and connect your repository.
+4. Render will automatically configure the Web Service and mount a persistent disk at `/data/vault.db` for the database.
+
+### Configure GitLab Environment
+To link your live deployment URL to your GitLab project:
+1. In GitLab, go to **Settings** -> **CI/CD** -> **Variables**.
+2. Add a variable named `DEPLOYMENT_URL` with the value of your live application URL.
+3. The GitLab CI/CD pipeline will automatically detect this and register the production environment under **Operate** -> **Environments**.
+
 ## Team
 
 - Member 1: UI, chatbot logic, README, demo

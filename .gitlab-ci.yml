@@ -85,5 +85,7 @@ deploy_notice:
     - echo "Pipeline completed for MyDocVault"
     - echo "Branch -> $CI_COMMIT_REF_NAME"
     - echo "Commit -> $CI_COMMIT_SHORT_SHA"
-    - echo "This project is not auto-deployed."
-    - echo "Run node server.js locally to use it."
+    - echo "Live URL -> ${DEPLOYMENT_URL:-https://mydocvault.onrender.com}"
+  environment:
+    name: production
+    url: ${DEPLOYMENT_URL:-https://mydocvault.onrender.com}

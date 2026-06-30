@@ -1,0 +1,17 @@
+# render.yaml
+services:
+  - type: web
+    name: mydocvault
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    disk:
+      name: vault-db
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DB_PATH
+        value: /data/vault.db

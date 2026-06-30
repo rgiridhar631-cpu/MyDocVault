@@ -6,7 +6,7 @@ function walkDir(dir, callback) {
   fs.readdirSync(dir).forEach(f => {
     let dirPath = path.join(dir, f);
     let isDirectory = fs.statSync(dirPath).isDirectory();
-    if (f === 'node_modules' || f === '.git' || f === '.agents' || f === 'demo_project') {
+    if (f === 'node_modules' || f === '.git' || f === '.agents' || f === 'demo_project' || f === 'dist') {
       return;
     }
     if (isDirectory) {

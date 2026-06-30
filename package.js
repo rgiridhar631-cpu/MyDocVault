@@ -11,7 +11,11 @@ const filesToCopy = [
   'style.css',
   'script.js',
   'server.js',
-  'package.json'
+  'package.json',
+  'manifest.json',
+  'sw.js',
+  'icon-192.png',
+  'icon-512.png'
 ];
 
 filesToCopy.forEach(file => {
