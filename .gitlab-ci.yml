@@ -1,6 +1,5 @@
 # .gitlab-ci.yml - MyDocVault CI/CD Pipeline
 # 10 stages, run on the project registered shell runner
-
 stages:
   - install
   - lint

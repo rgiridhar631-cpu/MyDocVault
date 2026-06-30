@@ -9,7 +9,7 @@
     "setup": "node -e \"require('./services/db').initDb().then(()=>console.log('DB ready'))\""
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.20.9",
+    "@anthropic-ai/sdk": "^0.107.0",
     "better-sqlite3": "^12.11.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
