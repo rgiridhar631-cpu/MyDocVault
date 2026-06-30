@@ -4,7 +4,7 @@ jest.mock('pdf-parse', () => {
   return jest.fn().mockImplementation(() => {
     return Promise.resolve({
       numpages: 3,
-      text: 'Mocked PDF Content'
+      text: 'Mocked PDF Content',
     });
   });
 });

@@ -8,8 +8,8 @@ module.exports = {
       branches: 0,
       functions: 10,
       lines: 10,
-      statements: 10
-    }
+      statements: 10,
+    },
   },
-  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/demo_project/']
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/demo_project/'],
 };

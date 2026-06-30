@@ -3,6 +3,7 @@
 This file defines project-specific rules and instructions for Antigravity AI agents working in this repository.
 
 ## Rules & Coding Guidelines
+
 1. **Security Policy**:
    - Never commit hardcoded secrets, tokens, or API keys. Always use placeholder files like `.env.example` or read from environment variables.
    - Run the local security scanner `node secret-scan.js` before pushing changes.
